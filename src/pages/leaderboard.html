@@ -1,0 +1,2532 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Build with Orb: AI Leaderboards</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      (function (w, d, s, l, i) {
+        w[l] = w[l] || [];
+        w[l].push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
+        var f = d.getElementsByTagName(s)[0],
+          j = d.createElement(s),
+          dl = l != "dataLayer" ? "&l=" + l : "";
+        j.async = true;
+        j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
+        f.parentNode.insertBefore(j, f);
+      })(window, document, "script", "dataLayer", "GTM-5GKK93F9");
+    </script>
+    <style>
+      :root {
+        --cream: #fbf8f0;
+        --ink: #130f0b;
+        --ink-mid: #5b5448;
+        --ink-muted: #847e74;
+        --ink-faint: #c4bfb8;
+        --blue: #5b72fb;
+        --blue-light: #aaebff;
+        --green: #5f8a4d;
+        --red: #df4d33;
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--cream);
+        color: var(--ink);
+        min-height: 100vh;
+        position: relative;
+        overflow-x: hidden;
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 420px;
+        background: radial-gradient(
+          ellipse 80% 60% at 70% -10%,
+          rgba(170, 235, 255, 0.45),
+          transparent
+        );
+        pointer-events: none;
+        z-index: 0;
+      }
+      body::after {
+        content: "";
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 360px;
+        background: radial-gradient(
+          ellipse 70% 60% at 30% 110%,
+          rgba(95, 138, 77, 0.18),
+          transparent
+        );
+        pointer-events: none;
+        z-index: 0;
+      }
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 32px 80px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 28px 0 40px;
+      }
+      .logo {
+        font-family: "Inter", sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        color: var(--ink);
+        letter-spacing: -1px;
+      }
+      .header-badge {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+        background: rgba(91, 114, 251, 0.12);
+        color: var(--blue);
+        padding: 5px 12px;
+        border-radius: 20px;
+      }
+
+      .hero {
+        text-align: center;
+        padding: 20px 0 48px;
+      }
+      .hero-label {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+        color: var(--red);
+        margin-bottom: 12px;
+      }
+      .hero h1 {
+        font-family: "Playfair Display", serif;
+        font-size: 52px;
+        font-weight: 700;
+        line-height: 1.15;
+        margin-bottom: 16px;
+      }
+      .hero h1 span {
+        color: var(--blue);
+      }
+      .hero p {
+        font-size: 16px;
+        color: var(--ink-mid);
+        max-width: 560px;
+        margin: 0 auto;
+        line-height: 1.6;
+      }
+
+      .step-nav {
+        display: flex;
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(4px);
+        border: 1px solid rgba(19, 15, 11, 0.1);
+        border-radius: 12px;
+        padding: 6px;
+        margin-bottom: 32px;
+      }
+      .step-pill {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 8px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ink-muted);
+      }
+      .step-pill.completed {
+        color: var(--green);
+        background: rgba(95, 138, 77, 0.1);
+      }
+      .step-pill.active {
+        color: var(--ink);
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 1px 4px rgba(19, 15, 11, 0.1);
+      }
+      .step-pill.locked {
+        opacity: 0.38;
+        cursor: not-allowed;
+      }
+      .step-num {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: 700;
+        background: rgba(19, 15, 11, 0.08);
+        color: var(--ink-muted);
+        flex-shrink: 0;
+      }
+      .step-pill.active .step-num {
+        background: var(--ink);
+        color: var(--cream);
+      }
+      .step-pill.completed .step-num {
+        background: var(--green);
+        color: #fff;
+      }
+      .step-label {
+        display: none;
+      }
+      @media (min-width: 600px) {
+        .step-label {
+          display: inline;
+        }
+      }
+
+      .card {
+        background: rgba(255, 255, 255, 0.58);
+        backdrop-filter: blur(6px);
+        border: 1px solid rgba(19, 15, 11, 0.09);
+        border-radius: 12px;
+        padding: 32px;
+        margin-bottom: 24px;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+      .card:hover {
+        border-color: rgba(19, 15, 11, 0.16);
+        box-shadow: 0 4px 24px rgba(19, 15, 11, 0.06);
+      }
+      .section-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+      .card h2 {
+        font-family: "Playfair Display", serif;
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 10px;
+        line-height: 1.2;
+      }
+      .card p {
+        color: var(--ink-mid);
+        line-height: 1.65;
+        font-size: 14px;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--ink);
+        color: var(--cream);
+        border: none;
+        border-radius: 8px;
+        padding: 12px 24px;
+        font-family: "Inter", sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition:
+          opacity 0.15s,
+          transform 0.1s;
+        text-decoration: none;
+      }
+      .btn:hover {
+        opacity: 0.85;
+        transform: translateY(-1px);
+      }
+      .btn:active {
+        transform: translateY(0);
+      }
+      .btn-outline {
+        background: transparent;
+        border: 1.5px solid rgba(19, 15, 11, 0.18);
+        color: var(--ink);
+      }
+      .btn-outline:hover {
+        background: rgba(19, 15, 11, 0.04);
+      }
+      .btn-blue {
+        background: var(--blue);
+      }
+      .btn-red {
+        background: var(--red);
+      }
+      .btn-green {
+        background: var(--green);
+      }
+      .btn-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 28px;
+      }
+      .btn-row-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .step-panel {
+        display: none;
+        animation: fadeIn 0.3s ease;
+      }
+      .step-panel.active {
+        display: block;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .slider-section {
+        margin: 28px 0 24px;
+      }
+      .slider-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+      .slider-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--ink-muted);
+        text-align: center;
+        flex: 1;
+        transition: color 0.2s;
+        cursor: pointer;
+        padding: 0 4px;
+      }
+      .slider-label.active {
+        color: var(--blue);
+      }
+      input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 4px;
+        border-radius: 99px;
+        outline: none;
+        cursor: pointer;
+        background: linear-gradient(
+          90deg,
+          var(--blue) var(--fill),
+          rgba(19, 15, 11, 0.12) var(--fill)
+        );
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: var(--blue);
+        border: 3px solid var(--cream);
+        box-shadow: 0 1px 6px rgba(91, 114, 251, 0.4);
+        cursor: pointer;
+        transition: transform 0.15s;
+      }
+      input[type="range"]::-webkit-slider-thumb:hover {
+        transform: scale(1.15);
+      }
+      .slider-stop-dots {
+        display: flex;
+        justify-content: space-between;
+        padding: 0 11px;
+        margin-top: 2px;
+      }
+      .slider-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgba(19, 15, 11, 0.15);
+        transition: background 0.2s;
+      }
+      .slider-dot.passed {
+        background: var(--blue);
+      }
+      .metric-explain {
+        background: rgba(255, 255, 255, 0.75);
+        border: 1.5px solid rgba(91, 114, 251, 0.22);
+        border-radius: 10px;
+        padding: 20px 22px;
+        margin-top: 16px;
+      }
+      .metric-explain-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+      .metric-explain-icon {
+        font-size: 22px;
+      }
+      .metric-explain-name {
+        font-family: "Playfair Display", serif;
+        font-size: 18px;
+        font-weight: 700;
+      }
+      .metric-explain p {
+        font-size: 13px;
+        color: var(--ink-mid);
+        line-height: 1.65;
+        margin: 0;
+      }
+      .spectrum-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 14px;
+        padding: 8px 14px;
+        background: rgba(19, 15, 11, 0.04);
+        border-radius: 8px;
+        font-size: 11px;
+        color: var(--ink-muted);
+      }
+      .spectrum-bar span {
+        font-weight: 600;
+      }
+
+      .endpoint-tabs {
+        display: flex;
+        border-bottom: 1.5px solid rgba(19, 15, 11, 0.1);
+        margin-bottom: 20px;
+      }
+      .endpoint-tab {
+        padding: 10px 20px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--ink-muted);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1.5px;
+        transition: all 0.2s;
+      }
+      .endpoint-tab.active {
+        color: var(--ink);
+        border-bottom-color: var(--red);
+      }
+      .code-block {
+        background: var(--ink);
+        border-radius: 8px;
+        padding: 18px 20px;
+        font-family: "Courier New", monospace;
+        font-size: 12px;
+        color: #c8d0e0;
+        line-height: 1.7;
+        overflow-x: auto;
+        margin-bottom: 16px;
+      }
+      .code-keyword {
+        color: var(--blue-light);
+      }
+      .code-string {
+        color: #a8e8a0;
+      }
+      .code-comment {
+        color: #6a7090;
+        font-style: italic;
+      }
+      .code-key {
+        color: #f0c880;
+      }
+      .code-num {
+        color: #f0a878;
+      }
+      .response-block {
+        background: rgba(95, 138, 77, 0.07);
+        border: 1px solid rgba(95, 138, 77, 0.25);
+        border-radius: 8px;
+        padding: 16px 20px;
+        font-family: "Courier New", monospace;
+        font-size: 11.5px;
+        color: var(--ink);
+        line-height: 1.7;
+        overflow-x: auto;
+        max-height: 220px;
+        overflow-y: auto;
+      }
+      .callout {
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-top: 12px;
+      }
+      .callout-blue {
+        background: rgba(91, 114, 251, 0.07);
+        border: 1px solid rgba(91, 114, 251, 0.18);
+      }
+      .callout-green {
+        background: rgba(95, 138, 77, 0.07);
+        border: 1px solid rgba(95, 138, 77, 0.2);
+      }
+      .callout p {
+        font-size: 12px;
+        color: var(--ink-mid);
+        margin: 0;
+        line-height: 1.6;
+      }
+      .callout-title {
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+      .callout-blue .callout-title {
+        color: var(--blue);
+      }
+      .callout-green .callout-title {
+        color: var(--green);
+      }
+
+      .decision-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+        margin: 20px 0 24px;
+      }
+      @media (min-width: 700px) {
+        .decision-grid {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      }
+      .decision-card {
+        background: rgba(255, 255, 255, 0.75);
+        border: 1px solid rgba(19, 15, 11, 0.09);
+        border-radius: 10px;
+        padding: 16px;
+      }
+      .decision-card:nth-child(1) {
+        border-top: 3px solid var(--blue);
+      }
+      .decision-card:nth-child(2) {
+        border-top: 3px solid var(--green);
+      }
+      .decision-card:nth-child(3) {
+        border-top: 3px solid var(--red);
+      }
+      .decision-card:nth-child(4) {
+        border-top: 3px solid var(--ink-faint);
+      }
+      .decision-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: var(--ink-muted);
+        margin-bottom: 6px;
+      }
+      .decision-value {
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .decision-sub {
+        font-size: 11px;
+        color: var(--ink-mid);
+        margin-top: 3px;
+      }
+      .snippet-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+      }
+      .snippet-tab {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        background: rgba(19, 15, 11, 0.07);
+        color: var(--ink-mid);
+        transition: all 0.2s;
+        border: none;
+      }
+      .snippet-tab.active {
+        background: var(--ink);
+        color: var(--cream);
+      }
+
+      .lb-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .lb-title {
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .date-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        background: rgba(19, 15, 11, 0.06);
+        color: var(--ink-mid);
+        padding: 5px 12px;
+        border-radius: 20px;
+      }
+      .leaderboard-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      .leaderboard-table th {
+        text-align: left;
+        padding: 10px 16px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: var(--ink-muted);
+        border-bottom: 1.5px solid rgba(19, 15, 11, 0.08);
+      }
+      .leaderboard-table td {
+        padding: 12px 16px;
+        border-bottom: 1px solid rgba(19, 15, 11, 0.05);
+      }
+      .leaderboard-table tr:last-child td {
+        border-bottom: none;
+      }
+      .leaderboard-table tr:hover td {
+        background: rgba(255, 255, 255, 0.45);
+      }
+      .place-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        font-size: 12px;
+        font-weight: 700;
+        background: rgba(19, 15, 11, 0.07);
+        color: var(--ink-muted);
+      }
+      .place-badge.gold {
+        background: linear-gradient(
+          135deg,
+          rgba(212, 175, 55, 0.3),
+          rgba(240, 208, 80, 0.2)
+        );
+        color: #9a7a08;
+      }
+      .place-badge.silver {
+        background: rgba(160, 160, 180, 0.2);
+        color: #5a5a7a;
+      }
+      .place-badge.bronze {
+        background: rgba(176, 125, 80, 0.2);
+        color: #7a4820;
+      }
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 20px;
+        margin-left: 6px;
+        vertical-align: middle;
+        letter-spacing: 0.3px;
+      }
+      .tag-gold {
+        background: rgba(212, 175, 55, 0.2);
+        color: #9a7a08;
+      }
+      .tag-blue {
+        background: rgba(91, 114, 251, 0.14);
+        color: var(--blue);
+      }
+      .tag-red {
+        background: rgba(223, 77, 51, 0.14);
+        color: var(--red);
+      }
+
+      .gamify-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 24px;
+      }
+      @media (max-width: 600px) {
+        .gamify-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .gamify-card {
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+      }
+      .gamify-card:nth-child(1) {
+        background: rgba(95, 138, 77, 0.09);
+        border: 1px solid rgba(95, 138, 77, 0.22);
+      }
+      .gamify-card:nth-child(2) {
+        background: rgba(212, 175, 55, 0.1);
+        border: 1px solid rgba(212, 175, 55, 0.25);
+      }
+      .gamify-card:nth-child(3) {
+        background: rgba(223, 77, 51, 0.08);
+        border: 1px solid rgba(223, 77, 51, 0.2);
+      }
+      .gamify-icon {
+        font-size: 28px;
+        margin-bottom: 8px;
+      }
+      .gamify-title {
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 5px;
+      }
+      .gamify-desc {
+        font-size: 11.5px;
+        color: var(--ink-mid);
+        line-height: 1.5;
+      }
+
+      .awards-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-bottom: 28px;
+      }
+      @media (max-width: 600px) {
+        .awards-row {
+          grid-template-columns: 1fr;
+        }
+      }
+      .award-card {
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+      }
+      .award-card.king {
+        background: linear-gradient(
+          135deg,
+          rgba(212, 175, 55, 0.16),
+          rgba(240, 210, 80, 0.09)
+        );
+        border: 1px solid rgba(212, 175, 55, 0.32);
+      }
+      .award-card.mover {
+        background: linear-gradient(
+          135deg,
+          rgba(91, 114, 251, 0.12),
+          rgba(91, 114, 251, 0.06)
+        );
+        border: 1px solid rgba(91, 114, 251, 0.25);
+      }
+      .award-card.battle {
+        background: linear-gradient(
+          135deg,
+          rgba(223, 77, 51, 0.1),
+          rgba(223, 77, 51, 0.05)
+        );
+        border: 1px solid rgba(223, 77, 51, 0.24);
+      }
+      .award-emoji {
+        font-size: 34px;
+        margin-bottom: 8px;
+      }
+      .award-title {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .award-winner {
+        font-family: "Playfair Display", serif;
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+      .award-desc {
+        font-size: 11px;
+        color: var(--ink-mid);
+      }
+      .award-card.king .award-title {
+        color: #9a7a08;
+      }
+      .award-card.mover .award-title {
+        color: var(--blue);
+      }
+      .award-card.battle .award-title {
+        color: var(--red);
+      }
+      .awards-logic-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 28px;
+      }
+      @media (max-width: 600px) {
+        .awards-logic-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .progress-item {
+        margin-bottom: 14px;
+        background: rgba(255, 255, 255, 0.65);
+        border: 1px solid rgba(19, 15, 11, 0.08);
+        border-radius: 10px;
+        padding: 16px 20px;
+      }
+      .progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .progress-name {
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .progress-meta {
+        font-size: 11px;
+        color: var(--ink-muted);
+      }
+      .progress-bar-track {
+        height: 8px;
+        background: rgba(19, 15, 11, 0.08);
+        border-radius: 99px;
+        overflow: hidden;
+      }
+      .progress-bar-fill {
+        height: 100%;
+        border-radius: 99px;
+      }
+      .progress-label {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 6px;
+        font-size: 10px;
+        color: var(--ink-muted);
+      }
+
+      .prereq-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-bottom: 28px;
+      }
+      @media (max-width: 600px) {
+        .prereq-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .prereq-card {
+        background: rgba(255, 255, 255, 0.75);
+        border: 1px solid rgba(19, 15, 11, 0.09);
+        border-radius: 10px;
+        padding: 20px;
+      }
+      .prereq-icon {
+        font-size: 22px;
+        margin-bottom: 10px;
+      }
+      .prereq-title {
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+      .prereq-desc {
+        font-size: 12px;
+        color: var(--ink-mid);
+        line-height: 1.6;
+      }
+
+      .download-box {
+        background: linear-gradient(
+          135deg,
+          rgba(91, 114, 251, 0.08),
+          rgba(91, 114, 251, 0.04)
+        );
+        border: 1.5px solid rgba(91, 114, 251, 0.22);
+        border-radius: 12px;
+        padding: 28px;
+        text-align: center;
+      }
+      .download-box h3 {
+        font-family: "Playfair Display", serif;
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .download-box p {
+        font-size: 13px;
+        color: var(--ink-mid);
+        max-width: 480px;
+        margin: 0 auto 20px;
+        line-height: 1.6;
+      }
+
+      .divider {
+        border: none;
+        border-top: 1px solid rgba(19, 15, 11, 0.08);
+        margin: 24px 0;
+      }
+      code {
+        background: rgba(19, 15, 11, 0.07);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: "Courier New", monospace;
+        font-size: 12px;
+        color: var(--blue);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div class="logo">orb</div>
+        <div class="header-badge">Interactive Demo</div>
+      </div>
+
+      <div class="hero">
+        <div class="hero-label">Build with Orb</div>
+        <h1>AI <span>Leaderboards</span></h1>
+        <p>
+          Track who's adopting your AI product, motivate your team, and share
+          progress — powered by Orb's usage billing infrastructure.
+        </p>
+      </div>
+
+      <div class="step-nav" id="stepNav">
+        <div class="step-pill active" onclick="goToStep(0)" id="pill-0">
+          <div class="step-num">1</div>
+          <span class="step-label">Track</span>
+        </div>
+        <div class="step-pill locked" id="pill-1">
+          <div class="step-num">2</div>
+          <span class="step-label">Setup</span>
+        </div>
+        <div class="step-pill locked" id="pill-2">
+          <div class="step-num">3</div>
+          <span class="step-label">Build</span>
+        </div>
+        <div class="step-pill locked" id="pill-3">
+          <div class="step-num">4</div>
+          <span class="step-label">Review</span>
+        </div>
+        <div class="step-pill locked" id="pill-4">
+          <div class="step-num">5</div>
+          <span class="step-label">Pizzaz</span>
+        </div>
+        <div class="step-pill locked" id="pill-5">
+          <div class="step-num">6</div>
+          <span class="step-label">Ship</span>
+        </div>
+      </div>
+
+      <!-- STEP 1 -->
+      <div class="step-panel active" id="step-0">
+        <div class="card">
+          <div class="section-label" style="color: var(--red)">
+            Step 1 — Track
+          </div>
+          <h2>What does great adoption look like?</h2>
+          <p>
+            Before you build, decide which signal matters most to your team.
+            This becomes your leaderboard metric — the single number that
+            captures who's getting the most value from your AI product.
+          </p>
+          <p style="margin-top: 14px">
+            Like billable metrics, you should match this to how your customers
+            understand value. Keeping your leaderboard metric close to how you
+            bill makes calculations easy — but less technical users may not
+            grasp how it translates to real outcomes. There's a spectrum.
+          </p>
+
+          <div class="slider-section">
+            <div class="slider-labels">
+              <div class="slider-label" onclick="setSlider(0)" id="slabel-0">
+                Tokens
+              </div>
+              <div
+                class="slider-label active"
+                onclick="setSlider(1)"
+                id="slabel-1"
+              >
+                Credits
+              </div>
+              <div class="slider-label" onclick="setSlider(2)" id="slabel-2">
+                Work Output
+              </div>
+              <div class="slider-label" onclick="setSlider(3)" id="slabel-3">
+                Outcomes
+              </div>
+            </div>
+            <div style="padding: 8px 0">
+              <input
+                type="range"
+                id="metricSlider"
+                min="0"
+                max="3"
+                value="1"
+                step="1"
+                oninput="onSlider(this.value)"
+                style="--fill: 33%"
+              />
+            </div>
+            <div class="slider-stop-dots">
+              <div class="slider-dot passed" id="dot-0"></div>
+              <div class="slider-dot passed" id="dot-1"></div>
+              <div class="slider-dot" id="dot-2"></div>
+              <div class="slider-dot" id="dot-3"></div>
+            </div>
+            <div class="metric-explain">
+              <div class="metric-explain-header">
+                <div class="metric-explain-icon" id="explainIcon">🪙</div>
+                <div class="metric-explain-name" id="explainName">Credits</div>
+              </div>
+              <p id="explainText">
+                The current gold standard in AI pricing. Credits are simpler to
+                understand because they often translate to costs. But less
+                technical teams may still not fully understand how this
+                translates — and tracking the metric you bill on can give the
+                impression that users are racking up costs rather than value.
+              </p>
+              <div class="spectrum-bar">
+                <span>← Easy for your team</span>
+                <span style="color: rgba(19, 15, 11, 0.18)">·····</span>
+                <span>Easy for users →</span>
+              </div>
+            </div>
+          </div>
+
+          <p>
+            For this dashboard, we'll keep it simple and go with
+            <strong>Credits</strong> — the most common starting point for AI
+            products.
+          </p>
+          <div class="btn-row">
+            <button class="btn btn-outline" style="visibility: hidden">
+              ← Back
+            </button>
+            <button class="btn" onclick="nextStep()">
+              🪙 Pick Credits Used →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="step-panel" id="step-1">
+        <div class="card">
+          <div class="section-label" style="color: var(--blue)">
+            Step 2 — Setup
+          </div>
+          <h2>Leaderboards run on Licenses.</h2>
+          <p style="margin-bottom: 14px">
+            Licenses are how top AI companies model per-user usage on team
+            plans. Instead of pooling all consumption together, each user gets
+            their own allotted credit budget to draw down. This means one power
+            user can't deplete a whole team's usage — and reporting on
+            individual-level usage becomes a first-class capability, not an
+            afterthought.
+          </p>
+          <p style="margin-bottom: 24px">
+            Orb supports this natively with the <strong>Licenses API</strong>.
+            To call it, you'll need your <code>ORB_SUBSCRIPTION_ID</code> and an
+            <code>ORB_API_KEY</code> from your Orb dashboard.
+          </p>
+
+          <div
+            style="
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 12px;
+              margin-bottom: 28px;
+            "
+          >
+            <div
+              style="
+                background: rgba(91, 114, 251, 0.06);
+                border: 1px solid rgba(91, 114, 251, 0.18);
+                border-radius: 10px;
+                padding: 16px;
+                text-align: center;
+              "
+            >
+              <div style="font-size: 22px; margin-bottom: 6px">🪣</div>
+              <div
+                style="font-size: 12px; font-weight: 700; margin-bottom: 4px"
+              >
+                Individual credit pools
+              </div>
+              <div
+                style="font-size: 11px; color: var(--ink-mid); line-height: 1.5"
+              >
+                Each user has their own allotment — no more one person draining
+                the team budget.
+              </div>
+            </div>
+            <div
+              style="
+                background: rgba(95, 138, 77, 0.07);
+                border: 1px solid rgba(95, 138, 77, 0.2);
+                border-radius: 10px;
+                padding: 16px;
+                text-align: center;
+              "
+            >
+              <div style="font-size: 22px; margin-bottom: 6px">📊</div>
+              <div
+                style="font-size: 12px; font-weight: 700; margin-bottom: 4px"
+              >
+                Per-user reporting
+              </div>
+              <div
+                style="font-size: 11px; color: var(--ink-mid); line-height: 1.5"
+              >
+                Individual-level usage is a first-class API capability, not a
+                custom query.
+              </div>
+            </div>
+            <div
+              style="
+                background: rgba(212, 175, 55, 0.1);
+                border: 1px solid rgba(212, 175, 55, 0.25);
+                border-radius: 10px;
+                padding: 16px;
+                text-align: center;
+              "
+            >
+              <div style="font-size: 22px; margin-bottom: 6px">🏆</div>
+              <div
+                style="font-size: 12px; font-weight: 700; margin-bottom: 4px"
+              >
+                Leaderboard-ready
+              </div>
+              <div
+                style="font-size: 11px; color: var(--ink-mid); line-height: 1.5"
+              >
+                The data shape maps directly to ranked tables, progress bars,
+                and award logic.
+              </div>
+            </div>
+          </div>
+
+          <div class="endpoint-tabs">
+            <div
+              class="endpoint-tab active"
+              onclick="switchEndpoint(this, 'lic')"
+            >
+              ① GET /license_types
+            </div>
+            <div class="endpoint-tab" onclick="switchEndpoint(this, 'usage')">
+              ② GET /licenses/usage
+            </div>
+          </div>
+
+          <div id="ep-lic">
+            <p style="font-size: 13px; margin-bottom: 14px">
+              Call this first to discover your license type IDs. The usage
+              endpoint requires a <code>license_type_id</code>, so this is a
+              required prerequisite. Most accounts have one type (e.g. "AI
+              Seat").
+            </p>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 6px;
+              "
+            >
+              <span
+                style="
+                  font-size: 11px;
+                  font-weight: 700;
+                  color: var(--ink-muted);
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                "
+                >Sample curl</span
+              >
+              <button
+                onclick="copyCode('curl-lic')"
+                style="
+                  font-size: 11px;
+                  font-weight: 600;
+                  color: var(--blue);
+                  background: none;
+                  border: none;
+                  cursor: pointer;
+                  padding: 0;
+                "
+              >
+                Copy
+              </button>
+            </div>
+            <div class="code-block" id="curl-lic">
+              curl https://api.withorb.com/v1/license_types?limit=100 \ -H
+              <span class="code-string"
+                >"Authorization: Bearer $ORB_API_KEY"</span
+              >
+            </div>
+            <div
+              style="
+                font-size: 11px;
+                font-weight: 700;
+                color: var(--ink-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 6px;
+              "
+            >
+              Sample response
+            </div>
+            <div class="response-block">
+              { "data": [ { "id": "lt_abc123", "name": "AI Seat",
+              "grouping_key": "user_id" } ], "pagination_metadata": {
+              "has_more": false, "next_cursor": null } }
+            </div>
+            <div class="callout callout-blue" style="margin-top: 12px">
+              <p class="callout-title">What you need from this response</p>
+              <p>
+                Save the <code>id</code> field from each license type. You'll
+                pass it as <code>license_type_id</code> in Call 2. If you have
+                multiple types, the leaderboard pipeline fetches usage for each
+                and sums credits per user automatically.
+              </p>
+            </div>
+          </div>
+
+          <div id="ep-usage" style="display: none">
+            <p style="font-size: 13px; margin-bottom: 14px">
+              Fetch per-user credit consumption for any date range. Use
+              <code>external_license_id</code> as the display name and
+              <code>consumed_credits</code> as the usage value. The leaderboard
+              makes three parallel calls: current week, previous week (for rank
+              changes), and Jan 1 → today (for Q1 progress bars).
+            </p>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 6px;
+              "
+            >
+              <span
+                style="
+                  font-size: 11px;
+                  font-weight: 700;
+                  color: var(--ink-muted);
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                "
+                >Sample curl</span
+              >
+              <button
+                onclick="copyCode('curl-usage')"
+                style="
+                  font-size: 11px;
+                  font-weight: 600;
+                  color: var(--blue);
+                  background: none;
+                  border: none;
+                  cursor: pointer;
+                  padding: 0;
+                "
+              >
+                Copy
+              </button>
+            </div>
+            <div class="code-block" id="curl-usage">
+              curl "https://api.withorb.com/v1/licenses/usage\
+              ?subscription_id=$ORB_SUBSCRIPTION_ID\ &license_type_id=lt_abc123\
+              &start_date=2026-02-23\ &end_date=2026-03-01\ &group_by=license\
+              &limit=100" \ -H
+              <span class="code-string"
+                >"Authorization: Bearer $ORB_API_KEY"</span
+              >
+            </div>
+            <div
+              style="
+                font-size: 11px;
+                font-weight: 700;
+                color: var(--ink-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 6px;
+              "
+            >
+              Sample response
+            </div>
+            <div class="response-block">
+              { "data": [ { "license_id": "lic_xyz", "external_license_id":
+              "Elena Marchetti", "consumed_credits": 48210, "allocated_credits":
+              100000, "remaining_credits": 51790, "start_date": "2026-02-23",
+              "end_date": "2026-03-01", "pricing_unit": "credit" } ],
+              "pagination_metadata": { "has_more": true, "next_cursor":
+              "cur_ynx8..." } }
+            </div>
+            <div class="callout callout-green" style="margin-top: 12px">
+              <p class="callout-title">Key fields for the leaderboard</p>
+              <p>
+                <code>external_license_id</code> is the user's display name.
+                <code>consumed_credits</code> is their usage — not
+                <code>credits_used</code>. Follow
+                <code>pagination_metadata.next_cursor</code> in a loop until
+                it's <code>null</code> to get all users.
+              </p>
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn btn-outline" onclick="prevStep()">← Back</button>
+            <button class="btn btn-blue" onclick="nextStep()">
+              Got it — let's build →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="step-panel" id="step-2">
+        <div class="card">
+          <div class="section-label" style="color: var(--green)">
+            Step 3 — Build
+          </div>
+          <h2>Structure and automate the pipeline</h2>
+          <p style="margin-bottom: 24px">
+            Key architecture decisions that shape the app.
+          </p>
+
+          <div class="decision-grid">
+            <div class="decision-card">
+              <div class="decision-label">Framework</div>
+              <div class="decision-value">Next.js 15</div>
+              <div class="decision-sub">
+                App Router + async server components.
+                <code>searchParams</code> must be awaited — it's a Promise in
+                Next 15.
+              </div>
+            </div>
+            <div class="decision-card">
+              <div class="decision-label">Data fetching</div>
+              <div class="decision-value">On load, server-side</div>
+              <div class="decision-sub">
+                Three parallel fetches via <code>Promise.all</code>: current
+                week, previous week, Q1 to date. No cron, no database.
+              </div>
+            </div>
+            <div class="decision-card">
+              <div class="decision-label">UI</div>
+              <div class="decision-value">shadcn/ui + Tailwind</div>
+              <div class="decision-sub">
+                Date picker is <code>"use client"</code>; everything else
+                server-rendered. Week stored in URL as
+                <code>?start=&end=</code>.
+              </div>
+            </div>
+            <div class="decision-card">
+              <div class="decision-label">Config</div>
+              <div class="decision-value">Env vars only</div>
+              <div class="decision-sub">
+                <code>ORB_API_KEY</code> and <code>ORB_SUBSCRIPTION_ID</code> in
+                Vercel dashboard. Never browser-exposed.
+              </div>
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn btn-outline" onclick="prevStep()">← Back</button>
+            <button class="btn btn-green" onclick="nextStep()">
+              Let's Build It →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div class="step-panel" id="step-3">
+        <div class="card">
+          <div class="section-label" style="color: var(--red)">
+            Step 4 — Review
+          </div>
+          <h2>Here's your leaderboard — functional, but plain.</h2>
+          <p style="margin-bottom: 20px">
+            The data is all there, but to really motivate people, we want to
+            take this further.
+          </p>
+
+          <div class="lb-header">
+            <div class="lb-title">AI Adoption Leaderboard</div>
+            <div class="date-badge">📅 Jan 20 – Jan 26, 2025</div>
+          </div>
+          <div
+            style="
+              background: rgba(255, 255, 255, 0.7);
+              border: 1px solid rgba(19, 15, 11, 0.09);
+              border-radius: 10px;
+              overflow: hidden;
+            "
+          >
+            <table class="leaderboard-table">
+              <thead>
+                <tr>
+                  <th>Place</th>
+                  <th>User</th>
+                  <th>Credits Used</th>
+                  <th>vs. Last Week</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="place-badge gold">1</span></td>
+                  <td>Elena Marchetti</td>
+                  <td>48,210</td>
+                  <td style="color: var(--green); font-weight: 700">
+                    ▲ 2 places
+                  </td>
+                </tr>
+                <tr>
+                  <td><span class="place-badge silver">2</span></td>
+                  <td>James Okafor</td>
+                  <td>39,550</td>
+                  <td style="color: var(--red); font-weight: 700">▼ 1 place</td>
+                </tr>
+                <tr>
+                  <td><span class="place-badge bronze">3</span></td>
+                  <td>Priya Suresh</td>
+                  <td>34,800</td>
+                  <td style="color: var(--green); font-weight: 700">
+                    ▲ 1 place
+                  </td>
+                </tr>
+                <tr>
+                  <td><span class="place-badge">4</span></td>
+                  <td>Tom Bauer</td>
+                  <td>32,500</td>
+                  <td style="color: var(--red); font-weight: 700">▼ 1 place</td>
+                </tr>
+                <tr>
+                  <td><span class="place-badge">5</span></td>
+                  <td>Anika Johansson</td>
+                  <td>25,110</td>
+                  <td style="color: var(--green); font-weight: 700">
+                    ▲ 3 places
+                  </td>
+                </tr>
+                <tr>
+                  <td><span class="place-badge">6</span></td>
+                  <td>Carlos Reyes</td>
+                  <td>21,300</td>
+                  <td style="color: var(--red); font-weight: 700">▼ 1 place</td>
+                </tr>
+                <tr>
+                  <td><span class="place-badge">7</span></td>
+                  <td>Mei-Lin Zhou</td>
+                  <td>17,050</td>
+                  <td style="color: var(--ink-muted)">—</td>
+                </tr>
+                <tr>
+                  <td><span class="place-badge">8</span></td>
+                  <td>Farrukh Tashkentov</td>
+                  <td>13,720</td>
+                  <td style="color: var(--green); font-weight: 700">
+                    ▲ 1 place
+                  </td>
+                </tr>
+                <tr>
+                  <td><span class="place-badge">9</span></td>
+                  <td>Sophie Dubois</td>
+                  <td>10,880</td>
+                  <td style="color: var(--red); font-weight: 700">
+                    ▼ 2 places
+                  </td>
+                </tr>
+                <tr>
+                  <td><span class="place-badge">10</span></td>
+                  <td>Ravi Nair</td>
+                  <td>7,410</td>
+                  <td style="color: var(--ink-muted)">—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div style="margin-top: 28px">
+            <h2
+              style="
+                font-family: &quot;Playfair Display&quot;, serif;
+                font-size: 24px;
+                font-weight: 700;
+                margin-bottom: 8px;
+              "
+            >
+              Ways companies drive adoption
+            </h2>
+            <p
+              style="
+                font-size: 14px;
+                color: var(--ink-mid);
+                line-height: 1.65;
+                margin-bottom: 20px;
+              "
+            >
+              Gamifying the leaderboard gives us more levers to drive adoption
+              than simple visibility. Here's a few examples of how AI-forward
+              companies are motivating transformation.
+            </p>
+            <div class="gamify-grid">
+              <div class="gamify-card">
+                <div class="gamify-icon">🎁</div>
+                <div class="gamify-title">Incentives</div>
+                <div class="gamify-desc">
+                  Top users earn bonus credits, gift cards, or extra seat access
+                  at end of quarter.
+                </div>
+              </div>
+              <div class="gamify-card">
+                <div class="gamify-icon">🏆</div>
+                <div class="gamify-title">Awards</div>
+                <div class="gamify-desc">
+                  Named titles like "King of the Hill" that refresh weekly
+                  create social currency.
+                </div>
+              </div>
+              <div class="gamify-card">
+                <div class="gamify-icon">⚔️</div>
+                <div class="gamify-title">Competition</div>
+                <div class="gamify-desc">
+                  Head-to-head matchups and public rankings make usage visible —
+                  everyone wants to climb.
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-outline" onclick="prevStep()">← Back</button>
+            <button class="btn btn-red" onclick="nextStep()">
+              ✨ Spruce It Up →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 5 -->
+      <div class="step-panel" id="step-4">
+        <div class="card">
+          <div class="section-label" style="color: var(--red)">
+            Step 5 — Pizzaz
+          </div>
+          <h2>Now we're talking.</h2>
+          <p style="margin-bottom: 16px">
+            Awards, progress, and friendly rivalry — the same data, now with
+            real motivating power.
+          </p>
+
+          <div class="awards-logic-grid">
+            <div
+              style="
+                background: rgba(212, 175, 55, 0.1);
+                border: 1px solid rgba(212, 175, 55, 0.28);
+                border-radius: 10px;
+                padding: 16px;
+              "
+            >
+              <div
+                style="
+                  font-size: 11px;
+                  font-weight: 700;
+                  letter-spacing: 0.5px;
+                  text-transform: uppercase;
+                  color: #9a7a08;
+                  margin-bottom: 6px;
+                "
+              >
+                👑 King of the Hill
+              </div>
+              <div
+                style="font-size: 12px; color: var(--ink-mid); line-height: 1.6"
+              >
+                Count trailing consecutive weeks at #1. Requires 3+ weeks for
+                full title. Extend by passing
+                <code>historicalSnapshots[]</code>.
+              </div>
+            </div>
+            <div
+              style="
+                background: rgba(91, 114, 251, 0.08);
+                border: 1px solid rgba(91, 114, 251, 0.2);
+                border-radius: 10px;
+                padding: 16px;
+              "
+            >
+              <div
+                style="
+                  font-size: 11px;
+                  font-weight: 700;
+                  letter-spacing: 0.5px;
+                  text-transform: uppercase;
+                  color: var(--blue);
+                  margin-bottom: 6px;
+                "
+              >
+                🚀 Mover & Shaker
+              </div>
+              <div
+                style="font-size: 12px; color: var(--ink-mid); line-height: 1.6"
+              >
+                Computed as <code>prevRank − currentRank</code>. The user with
+                the highest positive value wins.
+              </div>
+            </div>
+            <div
+              style="
+                background: rgba(223, 77, 51, 0.07);
+                border: 1px solid rgba(223, 77, 51, 0.2);
+                border-radius: 10px;
+                padding: 16px;
+              "
+            >
+              <div
+                style="
+                  font-size: 11px;
+                  font-weight: 700;
+                  letter-spacing: 0.5px;
+                  text-transform: uppercase;
+                  color: var(--red);
+                  margin-bottom: 6px;
+                "
+              >
+                ⚔️ Battle Royale
+              </div>
+              <div
+                style="font-size: 12px; color: var(--ink-mid); line-height: 1.6"
+              >
+                Two users within 2 places of each other in both current and
+                previous week. Winner = smallest combined gap.
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="section-label"
+            style="color: var(--ink-muted); margin-bottom: 12px"
+          >
+            This Week's Awards
+          </div>
+          <div class="awards-row">
+            <div class="award-card king">
+              <div class="award-emoji">👑</div>
+              <div class="award-title">King of the Hill</div>
+              <div class="award-winner">Elena Marchetti</div>
+              <div class="award-desc">#1 for 4 weeks straight</div>
+            </div>
+            <div class="award-card mover">
+              <div class="award-emoji">🚀</div>
+              <div class="award-title">Mover & Shaker</div>
+              <div class="award-winner">Anika Johansson</div>
+              <div class="award-desc">+8 places over 2 weeks</div>
+            </div>
+            <div class="award-card battle">
+              <div class="award-emoji">⚔️</div>
+              <div class="award-title">Battle Royale</div>
+              <div class="award-winner">Priya vs. Tom</div>
+              <div class="award-desc">Within 1 place for 2 weeks</div>
+            </div>
+          </div>
+
+          <div class="lb-header">
+            <div class="lb-title">AI Adoption Leaderboard</div>
+            <div class="date-badge">📅 Jan 20 – Jan 26, 2025</div>
+          </div>
+          <div
+            style="
+              background: rgba(255, 255, 255, 0.7);
+              border: 1px solid rgba(19, 15, 11, 0.09);
+              border-radius: 10px;
+              overflow: hidden;
+              margin-bottom: 28px;
+            "
+          >
+            <table class="leaderboard-table">
+              <thead>
+                <tr>
+                  <th>Place</th>
+                  <th>User</th>
+                  <th>Credits Used</th>
+                  <th>vs. Last Week</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="place-badge gold">1</span></td>
+                  <td>
+                    Elena Marchetti <span class="tag tag-gold">👑 KOTH</span>
+                  </td>
+                  <td>48,210</td>
+                  <td style="color: var(--green); font-weight: 700">
+                    ▲ 2 places
+                  </td>
+                </tr>
+                <tr>
+                  <td><span class="place-badge silver">2</span></td>
+                  <td>James Okafor</td>
+                  <td>39,550</td>
+                  <td style="color: var(--red); font-weight: 700">▼ 1 place</td>
+                </tr>
+                <tr>
+                  <td><span class="place-badge bronze">3</span></td>
+                  <td>
+                    Priya Suresh <span class="tag tag-red">⚔️ BATTLE</span>
+                  </td>
+                  <td>34,800</td>
+                  <td style="color: var(--green); font-weight: 700">
+                    ▲ 1 place
+                  </td>
+                </tr>
+                <tr>
+                  <td><span class="place-badge">4</span></td>
+                  <td>Tom Bauer <span class="tag tag-red">⚔️ BATTLE</span></td>
+                  <td>32,500</td>
+                  <td style="color: var(--red); font-weight: 700">▼ 1 place</td>
+                </tr>
+                <tr>
+                  <td><span class="place-badge">5</span></td>
+                  <td>
+                    Anika Johansson <span class="tag tag-blue">🚀 MOVER</span>
+                  </td>
+                  <td>25,110</td>
+                  <td style="color: var(--green); font-weight: 700">
+                    ▲ 3 places
+                  </td>
+                </tr>
+                <tr>
+                  <td><span class="place-badge">6</span></td>
+                  <td>Carlos Reyes</td>
+                  <td>21,300</td>
+                  <td style="color: var(--red); font-weight: 700">▼ 1 place</td>
+                </tr>
+                <tr>
+                  <td><span class="place-badge">7</span></td>
+                  <td>Mei-Lin Zhou</td>
+                  <td>17,050</td>
+                  <td style="color: var(--ink-muted)">—</td>
+                </tr>
+                <tr>
+                  <td><span class="place-badge">8</span></td>
+                  <td>Farrukh Tashkentov</td>
+                  <td>13,720</td>
+                  <td style="color: var(--green); font-weight: 700">
+                    ▲ 1 place
+                  </td>
+                </tr>
+                <tr>
+                  <td><span class="place-badge">9</span></td>
+                  <td>Sophie Dubois</td>
+                  <td>10,880</td>
+                  <td style="color: var(--red); font-weight: 700">
+                    ▼ 2 places
+                  </td>
+                </tr>
+                <tr>
+                  <td><span class="place-badge">10</span></td>
+                  <td>Ravi Nair</td>
+                  <td>7,410</td>
+                  <td style="color: var(--ink-muted)">—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2
+            style="
+              font-family: &quot;Playfair Display&quot;, serif;
+              font-size: 24px;
+              font-weight: 700;
+              margin-bottom: 6px;
+            "
+          >
+            Q1 Incentive Progress
+          </h2>
+          <p
+            style="font-size: 14px; color: var(--ink-mid); margin-bottom: 20px"
+          >
+            🏆 Winners receive a trophy and a $200 gift card to a merchant of
+            their choosing!
+          </p>
+          <div class="progress-item">
+            <div class="progress-header">
+              <div class="progress-name">Elena Marchetti</div>
+              <div class="progress-meta">287,440 / 350,000 credits</div>
+            </div>
+            <div class="progress-bar-track">
+              <div
+                class="progress-bar-fill"
+                style="
+                  width: 82%;
+                  background: linear-gradient(90deg, var(--blue), #8090fc);
+                "
+              ></div>
+            </div>
+            <div class="progress-label">
+              <span>Jan 1</span><span>Mar 31</span>
+            </div>
+          </div>
+          <div class="progress-item">
+            <div class="progress-header">
+              <div class="progress-name">James Okafor</div>
+              <div class="progress-meta">241,200 / 350,000 credits</div>
+            </div>
+            <div class="progress-bar-track">
+              <div
+                class="progress-bar-fill"
+                style="
+                  width: 69%;
+                  background: linear-gradient(90deg, var(--green), #88c070);
+                "
+              ></div>
+            </div>
+            <div class="progress-label">
+              <span>Jan 1</span><span>Mar 31</span>
+            </div>
+          </div>
+          <div class="progress-item">
+            <div class="progress-header">
+              <div class="progress-name">Priya Suresh</div>
+              <div class="progress-meta">198,600 / 350,000 credits</div>
+            </div>
+            <div class="progress-bar-track">
+              <div
+                class="progress-bar-fill"
+                style="
+                  width: 57%;
+                  background: linear-gradient(90deg, var(--red), #f07060);
+                "
+              ></div>
+            </div>
+            <div class="progress-label">
+              <span>Jan 1</span><span>Mar 31</span>
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn btn-outline" onclick="prevStep()">← Back</button>
+            <button class="btn btn-green" onclick="nextStep()">
+              Nice! I'm ready to build it →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 6 -->
+      <div class="step-panel" id="step-5">
+        <div class="card">
+          <div class="section-label" style="color: var(--green)">
+            Step 6 — Ship
+          </div>
+          <h2>Build your own in an afternoon.</h2>
+          <p style="margin-bottom: 28px">
+            You need three things before you start. Once you have them, download
+            the Claude Code prompt below — it contains everything needed to
+            scaffold the full Next.js app.
+          </p>
+
+          <div class="prereq-grid">
+            <div class="prereq-card" style="border-top: 3px solid var(--blue)">
+              <div class="prereq-icon">🌐</div>
+              <div class="prereq-title">Vercel account</div>
+              <div class="prereq-desc">
+                A free Hobby account at
+                <a
+                  href="https://vercel.com"
+                  target="_blank"
+                  style="
+                    color: var(--blue);
+                    font-weight: 600;
+                    text-decoration: none;
+                  "
+                  >vercel.com</a
+                >
+                is all you need. It includes hosting and environment variable
+                management.
+              </div>
+            </div>
+            <div class="prereq-card" style="border-top: 3px solid var(--red)">
+              <div class="prereq-icon">🔑</div>
+              <div class="prereq-title">Orb API key</div>
+              <div class="prereq-desc">
+                Find it in your Orb dashboard under
+                <strong>Settings → API Keys</strong>. Use your
+                <strong>live mode</strong> key. This becomes
+                <code>ORB_API_KEY</code> in Vercel.
+              </div>
+            </div>
+            <div class="prereq-card" style="border-top: 3px solid var(--green)">
+              <div class="prereq-icon">📋</div>
+              <div class="prereq-title">Subscription ID</div>
+              <div class="prereq-desc">
+                In your Orb dashboard, go to <strong>Customers</strong>, click
+                into the customer, and open their active subscription. The
+                <code>sub_</code> ID is at the top. This becomes
+                <code>ORB_SUBSCRIPTION_ID</code>.
+              </div>
+            </div>
+          </div>
+
+          <div class="callout callout-blue" style="margin-bottom: 28px">
+            <p class="callout-title">Setting environment variables in Vercel</p>
+            <p>
+              After importing your repo, go to
+              <strong>Project Settings → Environment Variables</strong>. Add
+              <code>ORB_API_KEY</code> and <code>ORB_SUBSCRIPTION_ID</code> as
+              separate variables. They'll be available server-side only — never
+              exposed to the browser.
+            </p>
+          </div>
+
+          <div
+            style="
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 16px;
+              margin-bottom: 0;
+            "
+          >
+            <div
+              style="
+                background: linear-gradient(
+                  135deg,
+                  rgba(95, 138, 77, 0.09),
+                  rgba(95, 138, 77, 0.04)
+                );
+                border: 1.5px solid rgba(95, 138, 77, 0.28);
+                border-radius: 12px;
+                padding: 28px;
+                text-align: center;
+              "
+            >
+              <div style="font-size: 32px; margin-bottom: 12px">📦</div>
+              <h3
+                style="
+                  font-family: &quot;Playfair Display&quot;, serif;
+                  font-size: 18px;
+                  font-weight: 700;
+                  margin-bottom: 8px;
+                "
+              >
+                Clone the repo
+              </h3>
+              <p
+                style="
+                  font-size: 13px;
+                  color: var(--ink-mid);
+                  line-height: 1.6;
+                  margin-bottom: 20px;
+                "
+              >
+                The finished app is on GitHub. Fork it, add your env vars, and
+                deploy to Vercel in minutes.
+              </p>
+              <a
+                href="https://github.com/ellenmperfect2/usage-leaderboard-v3"
+                target="_blank"
+                class="btn btn-green"
+                style="display: inline-flex; text-decoration: none"
+                >↗ View on GitHub</a
+              >
+            </div>
+            <div class="download-box" style="margin-bottom: 0">
+              <div style="font-size: 32px; margin-bottom: 12px">📄</div>
+              <h3
+                style="
+                  font-family: &quot;Playfair Display&quot;, serif;
+                  font-size: 18px;
+                  font-weight: 700;
+                  margin-bottom: 8px;
+                "
+              >
+                Build with a prompt
+              </h3>
+              <p
+                style="
+                  font-size: 13px;
+                  color: var(--ink-mid);
+                  line-height: 1.6;
+                  margin-bottom: 20px;
+                "
+              >
+                Download the Claude Code prompt — it has the full spec, API
+                calls, awards logic, and design tokens to scaffold from scratch.
+              </p>
+              <button class="btn btn-blue" onclick="downloadPrompt()">
+                ⬇ Download Claude Code Prompt
+              </button>
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn btn-outline" onclick="prevStep()">← Back</button>
+            <button class="btn btn-outline" onclick="resetDemo()">
+              ↩ Start Over
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let currentStep = 0;
+      const totalSteps = 6;
+      const unlockedSteps = new Set([0]);
+
+      function nextStep() {
+        if (currentStep < totalSteps - 1) {
+          document
+            .getElementById("step-" + currentStep)
+            .classList.remove("active");
+          currentStep++;
+          unlockedSteps.add(currentStep);
+          document
+            .getElementById("step-" + currentStep)
+            .classList.add("active");
+          updateNav();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      }
+
+      function prevStep() {
+        if (currentStep > 0) {
+          document
+            .getElementById("step-" + currentStep)
+            .classList.remove("active");
+          currentStep--;
+          document
+            .getElementById("step-" + currentStep)
+            .classList.add("active");
+          updateNav();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      }
+
+      function goToStep(i) {
+        if (!unlockedSteps.has(i)) return;
+        document
+          .getElementById("step-" + currentStep)
+          .classList.remove("active");
+        currentStep = i;
+        document.getElementById("step-" + currentStep).classList.add("active");
+        updateNav();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      function updateNav() {
+        for (let i = 0; i < totalSteps; i++) {
+          const p = document.getElementById("pill-" + i);
+          p.className = "step-pill";
+          if (i === currentStep) p.classList.add("active");
+          else if (i < currentStep) p.classList.add("completed");
+          else if (!unlockedSteps.has(i)) p.classList.add("locked");
+        }
+      }
+
+      function resetDemo() {
+        currentStep = 0;
+        unlockedSteps.clear();
+        unlockedSteps.add(0);
+        document
+          .querySelectorAll(".step-panel")
+          .forEach((p) => p.classList.remove("active"));
+        document.getElementById("step-0").classList.add("active");
+        updateNav();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      const metrics = [
+        {
+          icon: "🔢",
+          name: "Tokens",
+          text: "Easy for your team, because they map closely to your own COGS. But may be tough for all but the most technical users to fully grasp — most people don't have an intuition for what a token means in terms of real work done.",
+        },
+        {
+          icon: "🪙",
+          name: "Credits",
+          text: "The current gold standard in AI pricing. Credits are simpler to understand because they often translate to costs. But less technical teams may still not fully understand how this translates — and tracking the metric you bill on can give the impression that users are racking up costs rather than value.",
+        },
+        {
+          icon: "📝",
+          name: "Work Output",
+          text: "Lines of code written, pages of writing produced. A metric you can extrapolate roughly — or pass directly in your event schema — that ties leaderboard rankings more closely to tangible output. Easier for users to connect to their day-to-day work.",
+        },
+        {
+          icon: "🏁",
+          name: "Outcomes",
+          text: "Hardest to extrapolate, but easiest for users to understand how their usage is translating to real value. Examples include features shipped, launch briefs produced, or another meaningful outcome. This will take some creative event construction if you're not already billing on outcomes.",
+        },
+      ];
+      const fills = ["0%", "33%", "66%", "100%"];
+
+      function onSlider(val) {
+        val = parseInt(val);
+        const m = metrics[val];
+        document.getElementById("explainIcon").textContent = m.icon;
+        document.getElementById("explainName").textContent = m.name;
+        document.getElementById("explainText").textContent = m.text;
+        document
+          .getElementById("metricSlider")
+          .style.setProperty("--fill", fills[val]);
+        document
+          .querySelectorAll(".slider-label")
+          .forEach((el, i) => el.classList.toggle("active", i === val));
+        document
+          .querySelectorAll(".slider-dot")
+          .forEach((el, i) => el.classList.toggle("passed", i <= val));
+      }
+
+      function setSlider(val) {
+        document.getElementById("metricSlider").value = val;
+        onSlider(val);
+      }
+
+      function switchEndpoint(tab, id) {
+        document
+          .querySelectorAll(".endpoint-tab")
+          .forEach((t) => t.classList.remove("active"));
+        tab.classList.add("active");
+        document.getElementById("ep-lic").style.display =
+          id === "lic" ? "" : "none";
+        document.getElementById("ep-usage").style.display =
+          id === "usage" ? "" : "none";
+      }
+
+      function copyCode(id) {
+        const el = document.getElementById(id);
+        const text = el.innerText || el.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          const btns = document.querySelectorAll('button[onclick^="copyCode"]');
+          btns.forEach((b) => {
+            if (b.getAttribute("onclick").includes(id)) {
+              b.textContent = "Copied!";
+              setTimeout(() => (b.textContent = "Copy"), 2000);
+            }
+          });
+        });
+      }
+
+      function switchSnippet(btn, id) {
+        document
+          .querySelectorAll(".snippet-tab")
+          .forEach((t) => t.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById("snippet-date").style.display =
+          id === "date" ? "" : "none";
+        document.getElementById("snippet-fetch").style.display =
+          id === "fetch" ? "" : "none";
+      }
+
+      function downloadPrompt() {
+        const text = `# Prompt: Build the Orb AI Adoption Leaderboard
+
+Use this document as a complete specification. Follow it exactly. Do not invent API endpoints, field names, or URL patterns — all are specified here and differ from the illustrative HTML demo.
+
+---
+
+## What You're Building
+
+A Next.js app that displays a live AI adoption leaderboard powered by Orb's Licenses API. It shows:
+
+1. **Three award cards** at the top (King of the Hill, Mover & Shaker, Battle Royale)
+2. **A ranked leaderboard table** sorted by credits consumed this week, with rank-change indicators and award tag badges on relevant users
+3. **Q1 incentive progress bars** for the top 3 users by credits since Jan 1
+4. **Week navigation arrows** (‹ ›) to browse historical weeks
+
+No auth, no database, no cron jobs. Fetch fresh on every page load.
+
+---
+
+## Tech Stack
+
+- **Next.js 15** with App Router
+- **TypeScript** (strict)
+- **Tailwind CSS** v3
+- **shadcn/ui utilities only** — \`clsx\`, \`tailwind-merge\`, \`class-variance-authority\` (no pre-built shadcn components needed; all UI is custom)
+- **next/font/google** for Playfair Display and Inter
+- **Vercel** deployment
+
+### package.json dependencies
+\`\`\`json
+{
+  "dependencies": {
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.5.4",
+    "class-variance-authority": "^0.7.1",
+    "lucide-react": "^0.469.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "tailwindcss": "^3.4.17",
+    "postcss": "^8.4.49",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.17.0",
+    "eslint-config-next": "^15.1.0"
+  }
+}
+\`\`\`
+
+---
+
+## Environment Variables
+
+\`\`\`
+ORB_API_KEY          # Orb API Bearer token
+ORB_SUBSCRIPTION_ID  # The subscription to query
+\`\`\`
+
+Set these in Vercel dashboard or \`.env.local\` locally.
+
+---
+
+## Orb API — Complete Specification
+
+**Base URL:** \`https://api.withorb.com/v1\`
+
+> ⚠️ The HTML demo used \`api.billwithorb.com\` — that is fictional. The real base URL is \`api.withorb.com\`.
+
+### Call 1: List License Types
+
+\`\`\`
+GET /license_types?limit=100
+Authorization: Bearer {ORB_API_KEY}
+\`\`\`
+
+Paginate with \`cursor\` until \`pagination_metadata.next_cursor\` is null.
+
+Response shape:
+\`\`\`json
+{
+  "data": [
+    {
+      "id": "lt_abc123",
+      "name": "AI Seat",
+      "grouping_key": "user_id"
+    }
+  ],
+  "pagination_metadata": {
+    "has_more": false,
+    "next_cursor": null
+  }
+}
+\`\`\`
+
+You need the \`id\` from each license type to make Call 2. This is a required prerequisite.
+
+---
+
+### Call 2: Get Usage for All Licenses of a Type
+
+\`\`\`
+GET /licenses/usage?subscription_id={SUB_ID}&license_type_id={LT_ID}&start_date={YYYY-MM-DD}&end_date={YYYY-MM-DD}&group_by=license&limit=100
+Authorization: Bearer {ORB_API_KEY}
+\`\`\`
+
+**Required query params:**
+- \`subscription_id\` — from \`ORB_SUBSCRIPTION_ID\` env var
+- \`license_type_id\` — from Call 1
+- \`start_date\` — \`YYYY-MM-DD\` format (NOT ISO datetime)
+- \`end_date\` — \`YYYY-MM-DD\` format (NOT ISO datetime)
+- \`group_by=license\` — required to get per-license breakdown
+- \`limit=100\`
+
+Paginate with \`cursor\` until \`pagination_metadata.next_cursor\` is null.
+
+Response shape:
+\`\`\`json
+{
+  "data": [
+    {
+      "license_id": "lic_xyz",
+      "external_license_id": "Elena Marchetti",
+      "subscription_id": "sub_...",
+      "license_type_id": "lt_abc123",
+      "start_date": "2026-02-23",
+      "end_date": "2026-03-01",
+      "allocated_credits": 100000,
+      "consumed_credits": 48210,
+      "remaining_credits": 51790,
+      "pricing_unit": "credit",
+      "allocation_eligible_credits": null,
+      "shared_pool_credits": null
+    }
+  ],
+  "pagination_metadata": {
+    "has_more": true,
+    "next_cursor": "cur_..."
+  }
+}
+\`\`\`
+
+**Key field mappings — do not get these wrong:**
+| Purpose | Field to use |
+|---|---|
+| Credits used | \`consumed_credits\` (NOT \`credits_used\`) |
+| User display name | \`external_license_id\` (NOT \`display_name\`) |
+| Stable user key | \`external_license_id ?? license_id\` |
+
+---
+
+### API call pattern (TypeScript)
+
+Use this exact pagination pattern for both calls:
+
+\`\`\`typescript
+let cursor: string | null = null;
+do {
+  const params = new URLSearchParams({
+    subscription_id: subscriptionId,
+    license_type_id: licenseTypeId,
+    start_date: startDate,
+    end_date: endDate,
+    group_by: "license",
+    limit: "100",
+  });
+  if (cursor) params.set("cursor", cursor);
+
+  const res = await fetch(\`https://api.withorb.com/v1/licenses/usage?\${params}\`, {
+    headers: {
+      Authorization: \`Bearer \${process.env.ORB_API_KEY}\`,
+      Accept: "application/json",
+    },
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(\`Orb API \${res.status}: \${body}\`);
+  }
+
+  const data = await res.json();
+  all.push(...data.data);
+  cursor = data.pagination_metadata?.next_cursor ?? null;
+} while (cursor);
+\`\`\`
+
+---
+
+### Three fetches per page load
+
+Make these three in parallel with \`Promise.all\`:
+
+1. **Current week** — this week's Monday → Sunday
+2. **Previous week** — the week before the selected week (for rank change comparison)
+3. **Q1** — Jan 1 of the current year → today (for progress bars)
+
+If the user has navigated to a historical week via URL params, "previous week" is still 7 days before *that* week, not the literal last calendar week.
+
+When multiple license types exist, fetch usage for each type, then **sum \`consumed_credits\` per \`external_license_id\`** across all types.
+
+---
+
+## Date Utilities
+
+Dates must be \`YYYY-MM-DD\` strings for the API. All date math uses UTC.
+
+\`\`\`typescript
+function toDateString(d: Date): string {
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return \`\${y}-\${m}-\${day}\`;
+}
+
+function getCurrentWeekBounds(): { start: Date; end: Date } {
+  const now = new Date();
+  const daysFromMonday = (now.getUTCDay() + 6) % 7;
+  const monday = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - daysFromMonday)
+  );
+  const sunday = new Date(monday);
+  sunday.setUTCDate(monday.getUTCDate() + 6);
+  return { start: monday, end: sunday };
+}
+
+function getQ1Bounds(): { start: Date; end: Date } {
+  const now = new Date();
+  return { start: new Date(Date.UTC(now.getUTCFullYear(), 0, 1)), end: now };
+}
+
+function formatWeekLabel(start: Date, end: Date): string {
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return \`\${months[start.getUTCMonth()]} \${start.getUTCDate()} – \${months[end.getUTCMonth()]} \${end.getUTCDate()}, \${end.getUTCFullYear()}\`;
+}
+\`\`\`
+
+---
+
+## Ranking and Rank Change
+
+\`\`\`typescript
+function rankUsageMap(usageMap: Map<string, { displayName: string; consumed: number }>) {
+  return Array.from(usageMap.entries())
+    .map(([id, { displayName, consumed }]) => ({ id, displayName, creditsUsed: consumed }))
+    .sort((a, b) => b.creditsUsed - a.creditsUsed)
+    .map((u, i) => ({ ...u, rank: i + 1 }));
+}
+
+const rankChange = prevRank !== null ? prevRank - currentRank : null;
+\`\`\`
+
+---
+
+## Awards Logic
+
+### King of the Hill
+\`\`\`typescript
+function computeKOTH(currentWeek: WeekSnapshot, timeline: WeekSnapshot[]): AwardData | null {
+  const leader = currentWeek.rankedUsers.find(u => u.rank === 1);
+  if (!leader) return null;
+  let streak = 0;
+  for (let i = timeline.length - 1; i >= 0; i--) {
+    const top = timeline[i].rankedUsers.find(u => u.rank === 1);
+    if (top?.externalCustomerId === leader.externalCustomerId) streak++;
+    else break;
+  }
+  return {
+    winner: leader.displayName,
+    description: streak >= 3 ? \`#1 for \${streak} weeks straight\`
+                : streak === 2 ? "#1 two weeks running"
+                : "#1 this week",
+  };
+}
+\`\`\`
+
+### Mover & Shaker
+User with greatest positive rank change (prevRank − currentRank). Must be > 0.
+
+### Battle Royale
+Pair within 2 places of each other in both weeks. Tie-break: smallest combined gap.
+
+### Award tag badges
+- \`👑 KOTH\` (gold) — King of the Hill winner
+- \`🚀 MOVER\` (blue) — Mover & Shaker winner
+- \`⚔️ BATTLE\` (red) — both users in Battle Royale pair
+
+---
+
+## Q1 Incentive Progress Bars
+
+- Date range: Jan 1 → today
+- Show top 3 by \`consumed_credits\`
+- Target: \`350_000\` credits (named constant)
+- Bar width: \`Math.min(100, Math.round((consumed / 350000) * 100))\`%
+- Bar gradients: blue → #1, green → #2, red → #3
+- Labels: name, "X / 350,000 credits", "Jan 1 / Mar 31"
+
+---
+
+## Visual Design Tokens
+
+| Token | Value |
+|---|---|
+| Page background | \`#f2ede4\` |
+| Primary text | \`#1a1040\` |
+| Red (Battle) | \`#c0392b\` |
+| Blue (Mover) | \`#2563a8\` |
+| Green (King) | \`#2d6e3e\` |
+| Muted text | \`#5a5070\` |
+| Heading font | Playfair Display |
+| Body font | Inter |
+
+### Background glows
+\`\`\`css
+body::before { /* top-right green glow */
+  position: fixed; top: -200px; right: -200px; width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(180,220,180,0.35) 0%, transparent 70%);
+  pointer-events: none; z-index: 0;
+}
+body::after { /* bottom-left blue glow */
+  position: fixed; bottom: -200px; left: -200px; width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(180,200,240,0.3) 0%, transparent 70%);
+  pointer-events: none; z-index: 0;
+}
+\`\`\`
+
+---
+
+## Key Rules
+
+1. Always use \`api.withorb.com\` — never \`api.billwithorb.com\`
+2. Use \`consumed_credits\` and \`external_license_id\` — not \`credits_used\` or \`display_name\`
+3. Date params are \`YYYY-MM-DD\`, not ISO 8601
+4. \`group_by=license\` is required on the usage call
+5. \`/license_types\` must be called first to get \`license_type_id\`
+6. In Next.js 15, \`searchParams\` is a Promise — always await it
+7. Row hover effects use CSS class \`.lb-row:hover\` in \`globals.css\`, not event handlers
+8. \`export const dynamic = "force-dynamic"\` on \`page.tsx\`
+
+---
+
+## File Structure
+
+\`\`\`
+app/layout.tsx, globals.css, page.tsx
+components/leaderboard/AwardsRow.tsx, LeaderboardTable.tsx, ProgressSection.tsx, DateRangePicker.tsx
+lib/orb.ts, awards.ts, utils.ts
+types/leaderboard.ts
+.env.local.example
+\`\`\`
+`;
+
+        const blob = new Blob([text], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "orb-leaderboard-claude-code-prompt.txt";
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    </script>
+  </body>
+</html>

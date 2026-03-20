@@ -1,0 +1,2402 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>upsells-demo</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
+    </style>
+    <script>
+      (function (w, d, s, l, i) {
+        w[l] = w[l] || [];
+        w[l].push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
+        var f = d.getElementsByTagName(s)[0],
+          j = d.createElement(s),
+          dl = l != "dataLayer" ? "&l=" + l : "";
+        j.async = true;
+        j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
+        f.parentNode.insertBefore(j, f);
+      })(window, document, "script", "dataLayer", "GTM-5GKK93F9");
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel">
+      const { useState } = React;
+
+      // ── Orb brand tokens ──────────────────────────────────────────────────────
+      const C = {
+        bg: "#f2ede4",
+        navy: "#1a1040",
+        navyLight: "#2d1f60",
+        red: "#c0392b",
+        blue: "#2563a8",
+        green: "#2d6e3e",
+        lime: "#5a9e2f",
+        periwinkle: "#4060c8",
+        text: "#1a1040",
+        muted: "#5a5070",
+        faint: "#8a80a0",
+        card: "rgba(255,255,255,0.55)",
+        cardBorder: "rgba(26,16,64,0.1)",
+        blueBadge: { bg: "rgba(37,99,168,0.12)", fg: "#2563a8" },
+        redBadge: { bg: "rgba(192,57,43,0.12)", fg: "#c0392b" },
+        greenBadge: { bg: "rgba(45,110,62,0.12)", fg: "#2d6e3e" },
+        limeBadge: { bg: "rgba(90,158,47,0.15)", fg: "#5a9e2f" },
+        navyBadge: { bg: "rgba(26,16,64,0.1)", fg: "#1a1040" },
+      };
+
+      const GF = `@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@400;500;600;700&display=swap');`;
+
+      // ── primitives ────────────────────────────────────────────────────────────
+
+      const Tag = ({ children, variant = "blue" }) => {
+        const v =
+          {
+            blue: C.blueBadge,
+            red: C.redBadge,
+            green: C.greenBadge,
+            lime: C.limeBadge,
+            navy: C.navyBadge,
+          }[variant] || C.blueBadge;
+        return (
+          <span
+            style={{
+              background: v.bg,
+              color: v.fg,
+              border: `1px solid ${v.fg}30`,
+              borderRadius: 6,
+              padding: "2px 10px",
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              fontFamily: "Inter, sans-serif",
+            }}
+          >
+            {children}
+          </span>
+        );
+      };
+
+      const Card = ({ children, style = {} }) => (
+        <div
+          style={{
+            background: C.card,
+            backdropFilter: "blur(4px)",
+            border: `1px solid ${C.cardBorder}`,
+            borderRadius: 12,
+            padding: "20px 24px",
+            ...style,
+          }}
+        >
+          {children}
+        </div>
+      );
+
+      const Btn = ({ children, onClick, variant = "primary", disabled }) => {
+        if (variant === "primary") {
+          return (
+            <button
+              onClick={onClick}
+              disabled={disabled}
+              style={{
+                background: C.navy,
+                color: C.bg,
+                border: "none",
+                borderRadius: 8,
+                padding: "10px 22px",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: disabled ? "not-allowed" : "pointer",
+                opacity: disabled ? 0.4 : 1,
+                fontFamily: "Inter, sans-serif",
+                letterSpacing: "0.02em",
+              }}
+            >
+              {children}
+            </button>
+          );
+        }
+        return (
+          <button
+            onClick={onClick}
+            disabled={disabled}
+            style={{
+              background: "transparent",
+              color: C.navy,
+              border: `1.5px solid ${C.navy}`,
+              borderRadius: 8,
+              padding: "9px 20px",
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: disabled ? "not-allowed" : "pointer",
+              opacity: disabled ? 0.4 : 1,
+              fontFamily: "Inter, sans-serif",
+              letterSpacing: "0.02em",
+            }}
+          >
+            {children}
+          </button>
+        );
+      };
+
+      const BackBtn = ({ onClick }) => (
+        <button
+          onClick={onClick}
+          style={{
+            background: "transparent",
+            border: "none",
+            color: C.muted,
+            fontSize: 13,
+            fontWeight: 500,
+            cursor: "pointer",
+            fontFamily: "Inter, sans-serif",
+            padding: "0 0 20px 0",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          ← back
+        </button>
+      );
+
+      const CopyBtn = ({ text }) => {
+        const [copied, setCopied] = useState(false);
+        return (
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(text);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1800);
+            }}
+            style={{
+              background: copied ? C.greenBadge.bg : C.blueBadge.bg,
+              color: copied ? C.green : C.blue,
+              border: `1px solid ${copied ? C.green : C.blue}30`,
+              borderRadius: 6,
+              padding: "3px 10px",
+              fontSize: 10,
+              fontWeight: 600,
+              cursor: "pointer",
+              fontFamily: "Inter, sans-serif",
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+              transition: "all 0.2s",
+            }}
+          >
+            {copied ? "✓ copied" : "copy"}
+          </button>
+        );
+      };
+
+      const Code = ({ code, lang = "" }) => (
+        <div style={{ position: "relative", margin: "10px 0" }}>
+          <div
+            style={{
+              position: "absolute",
+              top: 10,
+              right: 10,
+              display: "flex",
+              gap: 6,
+              alignItems: "center",
+            }}
+          >
+            {lang && (
+              <span
+                style={{
+                  color: "#8a80a0",
+                  fontSize: 10,
+                  fontWeight: 600,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  fontFamily: "Inter, sans-serif",
+                }}
+              >
+                {lang}
+              </span>
+            )}
+            <CopyBtn text={code} />
+          </div>
+          <pre
+            style={{
+              background: "rgba(26,16,64,0.06)",
+              border: `1px solid ${C.cardBorder}`,
+              borderRadius: 10,
+              padding: "16px 20px",
+              paddingTop: 42,
+              fontSize: 11.5,
+              color: "#2d1f60",
+              overflowX: "auto",
+              lineHeight: 1.8,
+              margin: 0,
+              fontFamily: "'Fira Mono', 'Courier New', monospace",
+            }}
+          >
+            <code>{code}</code>
+          </pre>
+        </div>
+      );
+
+      // ── nav ───────────────────────────────────────────────────────────────────
+
+      const NAV = [
+        { label: "Intro", tag: null },
+        { label: "① Decide", tag: "simple" },
+        { label: "② Configure", tag: "simple" },
+        { label: "③ Decide", tag: "advanced" },
+        { label: "④ Build", tag: "advanced" },
+      ];
+
+      const Nav = ({ step, setStep }) => (
+        <div
+          style={{
+            borderBottom: `1px solid ${C.cardBorder}`,
+            background: "rgba(242,237,228,0.85)",
+            backdropFilter: "blur(8px)",
+            padding: "0 40px",
+            display: "flex",
+            alignItems: "center",
+            gap: 32,
+            position: "sticky",
+            top: 0,
+            zIndex: 10,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "Playfair Display, serif",
+              fontWeight: 800,
+              color: C.navy,
+              fontSize: 18,
+              padding: "14px 0",
+              flexShrink: 0,
+            }}
+          >
+            orb
+          </div>
+          <div style={{ flex: 1, display: "flex", gap: 0 }}>
+            {NAV.map((s, i) => {
+              const active = i === step;
+              const done = i < step;
+              const locked = i > step;
+              return (
+                <button
+                  key={i}
+                  onClick={() => !locked && setStep(i)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    borderBottom: active
+                      ? `2px solid ${C.red}`
+                      : "2px solid transparent",
+                    color: active ? C.navy : locked ? C.faint : C.muted,
+                    padding: "14px 16px",
+                    fontSize: 12,
+                    fontWeight: active ? 700 : 500,
+                    cursor: locked ? "default" : "pointer",
+                    fontFamily: "Inter, sans-serif",
+                    letterSpacing: "0.01em",
+                    transition: "all 0.15s",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  {s.tag && (
+                    <span
+                      style={{
+                        fontSize: 9,
+                        opacity: 0.6,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.08em",
+                      }}
+                    >
+                      {s.tag === "simple" ? "simple" : "adv"}
+                    </span>
+                  )}
+                  {s.label}
+                  {done && (
+                    <span style={{ color: C.green, fontSize: 10 }}>✓</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      );
+
+      // ── INTRO ─────────────────────────────────────────────────────────────────
+
+      const Intro = ({ onStart }) => {
+        const [selected, setSelected] = useState("simple");
+        return (
+          <div style={{ maxWidth: 700 }}>
+            <p
+              style={{
+                color: C.muted,
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: "0.5px",
+                textTransform: "uppercase",
+                marginBottom: 14,
+                fontFamily: "Inter, sans-serif",
+              }}
+            >
+              Build with Orb
+            </p>
+            <h1
+              style={{
+                fontSize: 52,
+                fontWeight: 800,
+                color: C.navy,
+                margin: "0 0 8px",
+                lineHeight: 1.1,
+                fontFamily: "Playfair Display, serif",
+              }}
+            >
+              PLG upsells:
+              <br />
+              <span style={{ color: C.red }}>the better way</span>
+            </h1>
+            <p
+              style={{
+                color: C.muted,
+                fontSize: 15,
+                marginTop: 24,
+                lineHeight: 1.8,
+                maxWidth: 600,
+                fontFamily: "Inter, sans-serif",
+              }}
+            >
+              Upsells done right aren't sales calls — they're partnership
+              conversations. Navigating plans and pricing is genuinely hard, and
+              teams don't always land on something that keeps costs manageable
+              as they grow. The best time to talk about a plan change is when
+              you have the data to show{" "}
+              <em style={{ color: C.navy }}>why it makes sense for them</em>.
+            </p>
+            <p
+              style={{
+                color: C.muted,
+                fontSize: 15,
+                marginTop: 12,
+                lineHeight: 1.8,
+                maxWidth: 600,
+                fontFamily: "Inter, sans-serif",
+              }}
+            >
+              Orb's usage alerting infrastructure makes it possible to have
+              these conversations at exactly the right moment — automatically
+              surfacing signals so your team can focus on the human side.
+            </p>
+            <div style={{ marginTop: 32, marginBottom: 8 }}>
+              <p
+                style={{
+                  color: C.faint,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  letterSpacing: "0.5px",
+                  textTransform: "uppercase",
+                  marginBottom: 14,
+                  fontFamily: "Inter, sans-serif",
+                }}
+              >
+                Where do you want to start?
+              </p>
+              <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+                {[
+                  {
+                    id: "simple",
+                    icon: "⚡",
+                    label: "Simple: User alerts",
+                    desc: "Notify account admins when a user hits 75–90% of their usage allotment",
+                    accentColor: C.blue,
+                  },
+                  {
+                    id: "advanced",
+                    icon: "🔬",
+                    label: "Advanced: CSM intelligence",
+                    desc: "Build a dashboard that surfaces which accounts are ready for a plan conversation — with real code",
+                    accentColor: C.green,
+                  },
+                ].map((opt) => {
+                  const isSelected = selected === opt.id;
+                  return (
+                    <div
+                      key={opt.id}
+                      onClick={() => setSelected(opt.id)}
+                      style={{
+                        flex: 1,
+                        minWidth: 220,
+                        cursor: "pointer",
+                        background: isSelected
+                          ? "rgba(255,255,255,0.8)"
+                          : C.card,
+                        backdropFilter: "blur(4px)",
+                        border: `2px solid ${isSelected ? opt.accentColor : C.cardBorder}`,
+                        borderLeft: `4px solid ${isSelected ? opt.accentColor : "rgba(26,16,64,0.08)"}`,
+                        borderRadius: 12,
+                        padding: "18px 20px",
+                        boxShadow: isSelected
+                          ? `0 4px 16px ${opt.accentColor}20`
+                          : "none",
+                        transition: "all 0.18s",
+                      }}
+                    >
+                      <div style={{ fontSize: 22, marginBottom: 10 }}>
+                        {opt.icon}
+                      </div>
+                      <div
+                        style={{
+                          fontWeight: 700,
+                          color: C.navy,
+                          marginBottom: 6,
+                          fontFamily: "Playfair Display, serif",
+                          fontSize: 17,
+                        }}
+                      >
+                        {opt.label}
+                      </div>
+                      <div
+                        style={{
+                          color: C.muted,
+                          fontSize: 13,
+                          lineHeight: 1.7,
+                          fontFamily: "Inter, sans-serif",
+                        }}
+                      >
+                        {opt.desc}
+                      </div>
+                      {isSelected && (
+                        <div
+                          style={{
+                            marginTop: 12,
+                            display: "inline-block",
+                            background:
+                              opt.accentColor === C.blue
+                                ? C.blueBadge.bg
+                                : C.greenBadge.bg,
+                            color: opt.accentColor,
+                            borderRadius: 6,
+                            padding: "2px 10px",
+                            fontSize: 11,
+                            fontWeight: 600,
+                            fontFamily: "Inter, sans-serif",
+                            letterSpacing: "0.05em",
+                          }}
+                        >
+                          ✓ selected
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div style={{ marginTop: 28 }}>
+              <Btn onClick={() => onStart(selected)}>Start building →</Btn>
+            </div>
+          </div>
+        );
+      };
+
+      // ── SIMPLE: DECIDE ────────────────────────────────────────────────────────
+
+      const actionOptions = [
+        {
+          id: "email",
+          icon: "✉️",
+          label: "Notify account admins",
+          desc: "Best when a team admin controls budget or approvals. Gives them a heads-up before a hard cap is hit.",
+        },
+        {
+          id: "banner",
+          icon: "🔔",
+          label: "In-app banner",
+          desc: "Shows the user in real-time that they're approaching their limit. Great for self-serve products.",
+        },
+        {
+          id: "csm",
+          icon: "👤",
+          label: "Notify your CSM team",
+          desc: "Ideal when you want a human in the loop — especially for high-value accounts.",
+        },
+        {
+          id: "topup",
+          icon: "💳",
+          label: "Automatic top-up",
+          desc: "Best when the customer has pre-authorized overage spend. Zero friction.",
+        },
+      ];
+
+      const SimpleDecide = ({ onNext, onBack }) => {
+        const [threshold, setThreshold] = useState(75);
+        const [selected, setSelected] = useState(["email"]);
+        const toggle = (id) =>
+          setSelected((p) =>
+            p.includes(id) ? p.filter((x) => x !== id) : [...p, id],
+          );
+        const thresholdColor =
+          threshold >= 90 ? C.red : threshold >= 75 ? "#b07d1a" : C.green;
+
+        return (
+          <div style={{ maxWidth: 700 }}>
+            <BackBtn onClick={onBack} />
+            <Tag variant="green">Simple Case · Step 1 of 2</Tag>
+            <h2
+              style={{
+                fontSize: 30,
+                fontWeight: 800,
+                color: C.navy,
+                margin: "14px 0 6px",
+                fontFamily: "Playfair Display, serif",
+              }}
+            >
+              Decide: when to act, and how
+            </h2>
+            <p
+              style={{
+                color: C.muted,
+                lineHeight: 1.75,
+                marginBottom: 28,
+                fontFamily: "Inter, sans-serif",
+              }}
+            >
+              We recommend <strong style={{ color: C.navy }}>75–90%</strong> —
+              early enough the user has time to react, late enough the signal is
+              meaningful.
+            </p>
+
+            <Card style={{ marginBottom: 20 }}>
+              <div
+                style={{
+                  fontWeight: 700,
+                  color: C.navy,
+                  marginBottom: 16,
+                  fontFamily: "Inter, sans-serif",
+                }}
+              >
+                Usage threshold
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <input
+                  type="range"
+                  min={50}
+                  max={99}
+                  value={threshold}
+                  onChange={(e) => setThreshold(+e.target.value)}
+                  style={{ flex: 1, accentColor: C.navy }}
+                />
+                <div
+                  style={{
+                    background:
+                      threshold >= 90
+                        ? "rgba(192,57,43,0.12)"
+                        : threshold >= 75
+                          ? "rgba(176,125,26,0.12)"
+                          : "rgba(45,110,62,0.12)",
+                    color: thresholdColor,
+                    border: `1px solid ${thresholdColor}40`,
+                    borderRadius: 8,
+                    padding: "6px 16px",
+                    fontWeight: 800,
+                    fontSize: 20,
+                    minWidth: 64,
+                    textAlign: "center",
+                    fontFamily: "Inter, sans-serif",
+                  }}
+                >
+                  {threshold}%
+                </div>
+              </div>
+              <div
+                style={{
+                  marginTop: 12,
+                  fontSize: 13,
+                  color: C.muted,
+                  fontFamily: "Inter, sans-serif",
+                }}
+              >
+                {threshold < 75 &&
+                  "⚠️ Too early — users may not take action if they feel far from the limit."}
+                {threshold >= 75 &&
+                  threshold < 90 &&
+                  "✅ Good range — gives users and admins enough time to plan."}
+                {threshold >= 90 &&
+                  "🔴 Getting close to the wire — consider an earlier warning too."}
+              </div>
+            </Card>
+
+            <div
+              style={{
+                fontWeight: 700,
+                color: C.navy,
+                marginBottom: 12,
+                fontFamily: "Inter, sans-serif",
+              }}
+            >
+              What should happen when the threshold is hit?
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gap: 10,
+                gridTemplateColumns: "1fr 1fr",
+              }}
+            >
+              {actionOptions.map((opt) => {
+                const sel = selected.includes(opt.id);
+                return (
+                  <div
+                    key={opt.id}
+                    onClick={() => toggle(opt.id)}
+                    style={{
+                      background: sel ? "rgba(37,99,168,0.08)" : C.card,
+                      backdropFilter: "blur(4px)",
+                      border: `1.5px solid ${sel ? C.blue : C.cardBorder}`,
+                      borderRadius: 12,
+                      padding: "16px 18px",
+                      cursor: "pointer",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    <div style={{ fontSize: 20, marginBottom: 8 }}>
+                      {opt.icon}
+                    </div>
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        color: C.navy,
+                        fontSize: 14,
+                        marginBottom: 4,
+                        fontFamily: "Inter, sans-serif",
+                      }}
+                    >
+                      {opt.label}
+                    </div>
+                    <div
+                      style={{
+                        color: C.muted,
+                        fontSize: 12,
+                        lineHeight: 1.65,
+                        fontFamily: "Inter, sans-serif",
+                      }}
+                    >
+                      {opt.desc}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {selected.includes("email") && (
+              <div
+                style={{
+                  marginTop: 16,
+                  background: "rgba(37,99,168,0.08)",
+                  border: `1px solid ${C.blue}30`,
+                  borderRadius: 10,
+                  padding: "14px 18px",
+                }}
+              >
+                <div
+                  style={{
+                    color: C.blue,
+                    fontWeight: 700,
+                    fontSize: 13,
+                    marginBottom: 4,
+                    fontFamily: "Inter, sans-serif",
+                  }}
+                >
+                  📧 Great choice — let's build the email flow
+                </div>
+                <div
+                  style={{
+                    color: C.muted,
+                    fontSize: 13,
+                    lineHeight: 1.65,
+                    fontFamily: "Inter, sans-serif",
+                  }}
+                >
+                  We'll use Orb's webhook system to fire when a user hits{" "}
+                  <strong style={{ color: C.navy }}>{threshold}%</strong>, then
+                  route to an admin email.
+                </div>
+              </div>
+            )}
+
+            <div style={{ marginTop: 28 }}>
+              <Btn onClick={onNext} disabled={selected.length === 0}>
+                Let's build it →
+              </Btn>
+            </div>
+          </div>
+        );
+      };
+
+      // ── SIMPLE: CONFIGURE ─────────────────────────────────────────────────────
+
+      const Placeholder = ({ label }) => (
+        <div
+          style={{
+            background: "rgba(26,16,64,0.04)",
+            border: `2px dashed ${C.cardBorder}`,
+            borderRadius: 10,
+            padding: "28px 20px",
+            textAlign: "center",
+            margin: "12px 0",
+          }}
+        >
+          <div style={{ fontSize: 22, marginBottom: 6 }}>🖼️</div>
+          <div
+            style={{
+              color: C.faint,
+              fontSize: 12,
+              fontFamily: "Inter, sans-serif",
+              fontWeight: 600,
+            }}
+          >
+            {label}
+          </div>
+        </div>
+      );
+
+      const InlineCode = ({ children }) => (
+        <code
+          style={{
+            color: C.blue,
+            background: "rgba(37,99,168,0.1)",
+            padding: "1px 6px",
+            borderRadius: 4,
+            fontFamily: "monospace",
+            fontSize: 12,
+          }}
+        >
+          {children}
+        </code>
+      );
+
+      const simpleTabs = [
+        {
+          title: "The pricing model",
+          content: () => (
+            <div>
+              <p
+                style={{
+                  color: C.muted,
+                  lineHeight: 1.75,
+                  marginBottom: 14,
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: 13,
+                }}
+              >
+                Before we build, it helps to understand the billing pattern
+                we're working with. A lot of AI companies — including Claude
+                Code, Cursor, and others — use a{" "}
+                <strong style={{ color: C.navy }}>
+                  limited usage model with the option to purchase more
+                </strong>
+                . Users get a credit allotment on their plan, and when they run
+                out, they can choose to buy extra usage rather than hitting a
+                hard wall.
+              </p>
+              <div
+                style={{
+                  background: "rgba(37,99,168,0.06)",
+                  border: `1px solid ${C.blue}25`,
+                  borderRadius: 10,
+                  padding: "16px 18px",
+                  marginBottom: 14,
+                }}
+              >
+                <div
+                  style={{
+                    fontWeight: 700,
+                    color: C.navy,
+                    marginBottom: 10,
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: 13,
+                  }}
+                >
+                  Why this model works
+                </div>
+                <div
+                  style={{
+                    color: C.muted,
+                    fontSize: 13,
+                    lineHeight: 1.9,
+                    fontFamily: "Inter, sans-serif",
+                  }}
+                >
+                  <div style={{ marginBottom: 8 }}>
+                    🛡️ <strong style={{ color: C.navy }}>Prevents abuse</strong>{" "}
+                    — users have a defined budget, not unlimited access, which
+                    protects your cost of goods
+                  </div>
+                  <div style={{ marginBottom: 8 }}>
+                    🔓{" "}
+                    <strong style={{ color: C.navy }}>
+                      Keeps options open
+                    </strong>{" "}
+                    — instead of a hard cutoff, users can decide to pay for more
+                    and keep going
+                  </div>
+                  <div style={{ marginBottom: 8 }}>
+                    🤝{" "}
+                    <strong style={{ color: C.navy }}>
+                      Puts teams in control
+                    </strong>{" "}
+                    — admins can evaluate case by case whether extra spend is
+                    worth it, or let the limit stand
+                  </div>
+                  <div>
+                    📈{" "}
+                    <strong style={{ color: C.navy }}>
+                      Encourages usage growth
+                    </strong>{" "}
+                    — there's no fear of wasted plan spend, and power users can
+                    always expand without switching plans
+                  </div>
+                </div>
+              </div>
+              <p
+                style={{
+                  color: C.muted,
+                  lineHeight: 1.75,
+                  marginBottom: 14,
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: 13,
+                }}
+              >
+                The key to making this work well is{" "}
+                <strong style={{ color: C.navy }}>
+                  surfacing the option to purchase extra usage at exactly the
+                  right moment
+                </strong>{" "}
+                — not after a user has already hit their limit and lost access,
+                but just before, when there's still time to act. That's what
+                we're building here.
+              </p>
+              <div
+                style={{
+                  background: "rgba(45,110,62,0.08)",
+                  border: `1px solid ${C.green}30`,
+                  borderRadius: 10,
+                  padding: "14px 18px",
+                }}
+              >
+                <div
+                  style={{
+                    color: C.green,
+                    fontWeight: 700,
+                    marginBottom: 6,
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: 13,
+                  }}
+                >
+                  How Orb fits in
+                </div>
+                <div
+                  style={{
+                    color: C.muted,
+                    fontSize: 13,
+                    lineHeight: 1.75,
+                    fontFamily: "Inter, sans-serif",
+                  }}
+                >
+                  Orb tracks each user's license usage in real time and fires a
+                  webhook when they approach their cap. We'll route that signal
+                  to Slack with a direct link to purchase more credits — so the
+                  admin sees it, understands the context, and can act
+                  immediately.
+                </div>
+              </div>
+            </div>
+          ),
+        },
+        {
+          title: "Set up Slack",
+          content: () => (
+            <div>
+              <p
+                style={{
+                  color: C.muted,
+                  lineHeight: 1.75,
+                  marginBottom: 16,
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: 13,
+                }}
+              >
+                Before we configure anything in Orb, we need somewhere for the
+                webhook to land. We'll use{" "}
+                <strong style={{ color: C.navy }}>
+                  Slack incoming webhooks
+                </strong>{" "}
+                — since that's where most customer-facing communication already
+                happens, it's a natural place for usage alerts to surface too.
+              </p>
+              <p
+                style={{
+                  color: C.muted,
+                  lineHeight: 1.75,
+                  marginBottom: 16,
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: 13,
+                }}
+              >
+                An incoming webhook is just a unique URL that Slack gives you.
+                When anything POSTs a message to that URL, it appears in a
+                channel of your choice. We'll point Orb at this URL so that
+                usage alerts arrive as Slack notifications automatically.
+              </p>
+              <div
+                style={{
+                  background: "rgba(37,99,168,0.06)",
+                  border: `1px solid ${C.blue}25`,
+                  borderRadius: 10,
+                  padding: "16px 18px",
+                  marginBottom: 16,
+                }}
+              >
+                <div
+                  style={{
+                    fontWeight: 700,
+                    color: C.navy,
+                    marginBottom: 10,
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: 13,
+                  }}
+                >
+                  To create a Slack incoming webhook:
+                </div>
+                <ol
+                  style={{
+                    color: C.muted,
+                    fontSize: 13,
+                    lineHeight: 2,
+                    fontFamily: "Inter, sans-serif",
+                    margin: 0,
+                    paddingLeft: 20,
+                  }}
+                >
+                  <li>
+                    Go to{" "}
+                    <a
+                      href="https://api.slack.com/apps"
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: C.blue }}
+                    >
+                      api.slack.com/apps
+                    </a>{" "}
+                    and create a new app (or use an existing one)
+                  </li>
+                  <li>
+                    Under <strong style={{ color: C.navy }}>Features</strong>,
+                    select{" "}
+                    <strong style={{ color: C.navy }}>Incoming Webhooks</strong>{" "}
+                    and toggle it on
+                  </li>
+                  <li>
+                    Click{" "}
+                    <strong style={{ color: C.navy }}>
+                      Add New Webhook to Workspace
+                    </strong>{" "}
+                    and choose the channel where alerts should post
+                  </li>
+                  <li>
+                    Copy the webhook URL — it will look like{" "}
+                    <InlineCode>
+                      https://hooks.slack.com/services/T.../B.../...
+                    </InlineCode>
+                  </li>
+                </ol>
+              </div>
+              <p
+                style={{
+                  color: C.muted,
+                  lineHeight: 1.75,
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: 13,
+                }}
+              >
+                Full Slack docs:{" "}
+                <a
+                  href="https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/"
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ color: C.blue }}
+                >
+                  Sending messages using incoming webhooks →
+                </a>
+              </p>
+              <p
+                style={{
+                  color: C.muted,
+                  lineHeight: 1.75,
+                  marginTop: 12,
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: 13,
+                }}
+              >
+                Keep this URL handy — you'll paste it into Orb as your webhook
+                endpoint in the next step.
+              </p>
+            </div>
+          ),
+        },
+        {
+          title: "Register endpoint in Orb",
+          content: () => (
+            <div>
+              <p
+                style={{
+                  color: C.muted,
+                  lineHeight: 1.75,
+                  marginBottom: 8,
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: 13,
+                }}
+              >
+                <strong style={{ color: C.navy }}>What are licenses?</strong>{" "}
+                Licenses are how top AI companies model per-user usage on team
+                plans. Instead of pooling all consumption together, each user
+                gets their own allotted credit budget to draw down. This means
+                one power user can't deplete a whole team's usage — and
+                reporting on individual-level usage becomes a first-class
+                capability, not an afterthought.
+              </p>
+              <p
+                style={{
+                  color: C.muted,
+                  lineHeight: 1.75,
+                  marginBottom: 16,
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: 13,
+                }}
+              >
+                Pairing licenses with webhooks is powerful. With an alerting
+                tool like Slack, it means real-time notifications when a user
+                approaches their cap. With an entitlements tool, it means
+                billing-enforced cutoffs before a user racks up a large bill.
+                Here we'll focus on using license-scoped alerts to build Slack
+                notifications.
+              </p>
+              <p
+                style={{
+                  color: C.muted,
+                  lineHeight: 1.75,
+                  marginBottom: 12,
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: 13,
+                }}
+              >
+                Now we'll register your Slack webhook URL as an endpoint in Orb.
+                In the Orb dashboard, navigate to{" "}
+                <strong style={{ color: C.navy }}>Developers → Webhooks</strong>{" "}
+                in the left sidebar. Click{" "}
+                <strong style={{ color: C.navy }}>Add endpoint</strong> and
+                paste in your Slack incoming webhook URL.
+              </p>
+              <Placeholder label="Screenshot: Webhooks menu in the Developers tab" />
+              <Placeholder label="Screenshot: Add endpoint screen" />
+              <p
+                style={{
+                  color: C.muted,
+                  lineHeight: 1.75,
+                  marginTop: 12,
+                  marginBottom: 12,
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: 13,
+                }}
+              >
+                You can also register the endpoint via API:
+              </p>
+              <Code
+                lang="bash"
+                code={`curl -X POST https://api.withorb.com/v1/webhooks \\\n  -H "Authorization: Bearer $ORB_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "url": "https://hooks.slack.com/services/T.../B.../..."\n  }'`}
+              />
+              <p
+                style={{
+                  color: C.muted,
+                  lineHeight: 1.75,
+                  marginTop: 12,
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: 13,
+                }}
+              >
+                Orb will issue a signing secret for this endpoint. Save it as{" "}
+                <InlineCode>ORB_WEBHOOK_SECRET</InlineCode> in your environment
+                — you'll use it to verify that incoming requests are genuinely
+                from Orb.
+              </p>
+            </div>
+          ),
+        },
+        {
+          title: "Configure alerts",
+          content: () => (
+            <div>
+              <p
+                style={{
+                  color: C.muted,
+                  lineHeight: 1.75,
+                  marginBottom: 12,
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: 13,
+                }}
+              >
+                With your endpoint registered, the next step is telling Orb{" "}
+                <em>when</em> to fire. Alerts in Orb are configured at the
+                subscription level and let you define thresholds — when a
+                license's usage crosses one, Orb fires a{" "}
+                <InlineCode>subscription.usage_exceeded</InlineCode> webhook to
+                your endpoint.
+              </p>
+              <div
+                style={{
+                  fontWeight: 700,
+                  color: C.navy,
+                  marginBottom: 8,
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: 13,
+                }}
+              >
+                Via the Orb UI
+              </div>
+              <p
+                style={{
+                  color: C.muted,
+                  lineHeight: 1.75,
+                  marginBottom: 8,
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: 13,
+                }}
+              >
+                Open a customer's subscription in the Orb dashboard. Find the{" "}
+                <strong style={{ color: C.navy }}>Alerts</strong> tab. Click{" "}
+                <strong style={{ color: C.navy }}>Add alert</strong>, choose the
+                license metric you're tracking, and set your threshold (e.g.
+                75%).
+              </p>
+              <Placeholder label="Screenshot: Alerts overview on a subscription" />
+              <Placeholder label="Screenshot: Configuring a license allocation alert at threshold" />
+              <div
+                style={{
+                  fontWeight: 700,
+                  color: C.navy,
+                  marginTop: 16,
+                  marginBottom: 8,
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: 13,
+                }}
+              >
+                Via the API
+              </div>
+              <p
+                style={{
+                  color: C.muted,
+                  lineHeight: 1.75,
+                  marginBottom: 10,
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: 13,
+                }}
+              >
+                To set this up programmatically — for example, auto-creating
+                alerts whenever a new subscription is created — use the Create
+                subscription alert endpoint:
+              </p>
+              <Code
+                lang="bash"
+                code={`curl -X POST https://api.withorb.com/v1/subscriptions/sub_01xyz/alerts \\\n  -H "Authorization: Bearer $ORB_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "type": "usage_exceeded",\n    "metric_id": "metric_tokens_used",\n    "thresholds": [\n      { "value": 0.75 }\n    ]\n  }'`}
+              />
+              <p
+                style={{
+                  color: C.muted,
+                  lineHeight: 1.75,
+                  marginTop: 12,
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: 13,
+                }}
+              >
+                You can add multiple thresholds in one alert (e.g. 75% and 90%)
+                — Orb will fire a separate webhook event each time a threshold
+                is crossed. Orb evaluates alerts several times per day, so
+                notifications arrive with minimal lag.
+              </p>
+              <div
+                style={{
+                  background: "rgba(45,110,62,0.08)",
+                  border: `1px solid ${C.green}30`,
+                  borderRadius: 10,
+                  padding: "14px 18px",
+                  marginTop: 14,
+                }}
+              >
+                <div
+                  style={{
+                    color: C.green,
+                    fontWeight: 700,
+                    marginBottom: 6,
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: 13,
+                  }}
+                >
+                  💡 Tip
+                </div>
+                <div
+                  style={{
+                    color: C.muted,
+                    fontSize: 13,
+                    lineHeight: 1.75,
+                    fontFamily: "Inter, sans-serif",
+                  }}
+                >
+                  If you want alerts on every subscription automatically, hook
+                  into the <InlineCode>subscription.created</InlineCode> webhook
+                  and call the Create alert API as part of your onboarding flow.
+                </div>
+              </div>
+            </div>
+          ),
+        },
+        {
+          title: "Handle + notify Slack",
+          content: () => (
+            <div>
+              <p
+                style={{
+                  color: C.muted,
+                  lineHeight: 1.75,
+                  marginBottom: 12,
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: 13,
+                }}
+              >
+                When Orb fires a webhook, your server receives a POST request.
+                Verify the signature, deduplicate using the event{" "}
+                <InlineCode>id</InlineCode>, then forward a formatted message to
+                Slack — including a direct link so the admin can purchase extra
+                usage right away.
+              </p>
+              <Code
+                lang="javascript"
+                code={`app.post("/webhooks/orb", async (req, res) => {
+  // 1. Verify the request is genuinely from Orb
+  const sig = req.headers["x-orb-signature"];
+  if (!verifyOrbSignature(sig, req.body, process.env.ORB_WEBHOOK_SECRET)) {
+    return res.status(401).send("Unauthorized");
+  }
+
+  const event = req.body;
+
+  // 2. Idempotency — Orb may retry; don't double-notify
+  if (await db.webhooks.alreadySeen(event.id)) {
+    return res.status(200).send("Already processed");
+  }
+  await db.webhooks.markSeen(event.id);
+
+  // 3. Send a Slack message with a link to purchase more credits
+  if (event.type === "subscription.usage_exceeded") {
+    const { customer, properties } = event;
+    const pct = Math.round(properties.threshold * 100);
+    const used = properties.current_usage.toLocaleString();
+    const total = properties.allotted_usage.toLocaleString();
+    const remaining = (properties.allotted_usage - properties.current_usage).toLocaleString();
+
+    await fetch(process.env.SLACK_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        blocks: [
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: \`*Usage alert: \${customer.name}*\\nA user has reached *\${pct}%* of their credit allotment.\\n\${used} of \${total} credits used — *\${remaining} remaining*.\`
+            }
+          },
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: "They can purchase additional credits to keep going once they hit their limit, or the hard cap will apply."
+            }
+          },
+          {
+            type: "actions",
+            elements: [
+              {
+                type: "button",
+                style: "primary",
+                text: { type: "plain_text", text: "Purchase more credits" },
+                url: \`https://your-app.com/accounts/\${customer.id}/billing/credits\`
+              },
+              {
+                type: "button",
+                text: { type: "plain_text", text: "View account" },
+                url: \`https://your-app.com/accounts/\${customer.id}\`
+              }
+            ]
+          }
+        ]
+      })
+    });
+  }
+
+  res.status(200).send("OK");
+});`}
+              />
+              <div
+                style={{
+                  background: "rgba(37,99,168,0.06)",
+                  border: `1px solid ${C.blue}25`,
+                  borderRadius: 10,
+                  padding: "14px 18px",
+                  marginTop: 14,
+                }}
+              >
+                <div
+                  style={{
+                    color: C.blue,
+                    fontWeight: 700,
+                    marginBottom: 6,
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: 13,
+                  }}
+                >
+                  Retry guarantee
+                </div>
+                <div
+                  style={{
+                    color: C.muted,
+                    fontSize: 13,
+                    lineHeight: 1.75,
+                    fontFamily: "Inter, sans-serif",
+                  }}
+                >
+                  Orb retries failed deliveries at 5s → 5m → 30m → 2h → 5h → 10h
+                  → 10h. Your endpoint just needs to return{" "}
+                  <InlineCode>200</InlineCode> within 5 seconds — the
+                  idempotency check above ensures retries don't cause duplicate
+                  Slack messages.
+                </div>
+              </div>
+            </div>
+          ),
+        },
+        {
+          title: "Test in Orb dashboard",
+          content: () => (
+            <div>
+              <p
+                style={{
+                  color: C.muted,
+                  lineHeight: 1.75,
+                  marginBottom: 12,
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: 13,
+                }}
+              >
+                Before going live, verify the full pipeline end-to-end. In the
+                Orb webhooks portal, select your endpoint and click{" "}
+                <strong style={{ color: C.navy }}>Send test event</strong>. This
+                fires a real webhook payload to your URL instantly — no need to
+                simulate actual usage.
+              </p>
+              <Placeholder label="Screenshot: Sending a test event from the Orb webhooks portal" />
+              <p
+                style={{
+                  color: C.muted,
+                  lineHeight: 1.75,
+                  marginTop: 12,
+                  marginBottom: 12,
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: 13,
+                }}
+              >
+                If successful, you should see a Slack message appear in your
+                configured channel within seconds. If not, check the delivery
+                log in the Orb portal — it shows the response code your endpoint
+                returned, which makes debugging straightforward.
+              </p>
+              <div
+                style={{
+                  background: "rgba(45,110,62,0.08)",
+                  border: `1px solid ${C.green}30`,
+                  borderRadius: 10,
+                  padding: "14px 18px",
+                }}
+              >
+                <div
+                  style={{
+                    color: C.green,
+                    fontWeight: 700,
+                    marginBottom: 6,
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: 13,
+                  }}
+                >
+                  💡 Tip
+                </div>
+                <div
+                  style={{
+                    color: C.muted,
+                    fontSize: 13,
+                    lineHeight: 1.75,
+                    fontFamily: "Inter, sans-serif",
+                  }}
+                >
+                  You can also manually resend any past event from the delivery
+                  log — useful if something went wrong downstream and you need
+                  to re-trigger the Slack notification without waiting for real
+                  usage to cross the threshold again.
+                </div>
+              </div>
+            </div>
+          ),
+        },
+      ];
+
+      const SimpleConfigure = ({ onNext, onBack }) => {
+        const [tab, setTab] = useState(0);
+        return (
+          <div style={{ maxWidth: 720 }}>
+            <BackBtn onClick={onBack} />
+            <Tag variant="green">Simple Case · Step 2 of 2</Tag>
+            <h2
+              style={{
+                fontSize: 30,
+                fontWeight: 800,
+                color: C.navy,
+                margin: "14px 0 6px",
+                fontFamily: "Playfair Display, serif",
+              }}
+            >
+              Configure: webhooks + email
+            </h2>
+            <p
+              style={{
+                color: C.muted,
+                lineHeight: 1.75,
+                marginBottom: 28,
+                fontFamily: "Inter, sans-serif",
+              }}
+            >
+              Here's how to wire Orb's webhook system to email account admins at
+              exactly the right moment.
+            </p>
+            <div
+              style={{
+                display: "flex",
+                gap: 0,
+                marginBottom: 0,
+                borderBottom: `1px solid ${C.cardBorder}`,
+              }}
+            >
+              {simpleTabs.map((t, i) => (
+                <button
+                  key={i}
+                  onClick={() => setTab(i)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    borderBottom:
+                      tab === i
+                        ? `2px solid ${C.red}`
+                        : "2px solid transparent",
+                    color: tab === i ? C.navy : C.faint,
+                    padding: "10px 16px",
+                    fontSize: 12,
+                    fontWeight: tab === i ? 700 : 500,
+                    cursor: "pointer",
+                    fontFamily: "Inter, sans-serif",
+                    marginBottom: "-1px",
+                  }}
+                >
+                  {i + 1}. {t.title}
+                </button>
+              ))}
+            </div>
+            <Card style={{ borderRadius: "0 12px 12px 12px" }}>
+              <div
+                style={{
+                  fontWeight: 700,
+                  color: C.navy,
+                  fontSize: 15,
+                  marginBottom: 14,
+                  fontFamily: "Inter, sans-serif",
+                }}
+              >
+                {simpleTabs[tab].title}
+              </div>
+              {simpleTabs[tab].content()}
+            </Card>
+            <div style={{ marginTop: 28, display: "flex", gap: 12 }}>
+              {tab < simpleTabs.length - 1 && (
+                <Btn onClick={() => setTab((t) => t + 1)} variant="ghost">
+                  Next step →
+                </Btn>
+              )}
+              {tab === simpleTabs.length - 1 && (
+                <Btn onClick={onNext}>I'm ready to make it more advanced →</Btn>
+              )}
+            </div>
+          </div>
+        );
+      };
+
+      // ── ADVANCED: DECIDE ──────────────────────────────────────────────────────
+
+      const AdvancedDecide = ({ onNext, onBack }) => {
+        const [signals, setSignals] = useState([
+          "consistent",
+          "overage",
+          "seats",
+        ]);
+        const toggle = (id) =>
+          setSignals((p) =>
+            p.includes(id) ? p.filter((x) => x !== id) : [...p, id],
+          );
+        const opts = [
+          {
+            id: "consistent",
+            icon: "📈",
+            label: "Consistent high usage",
+            desc: "Users hitting 90%+ for 2+ consecutive periods. The most reliable predictor of upgrade readiness.",
+          },
+          {
+            id: "overage",
+            icon: "💸",
+            label: "Overage spend",
+            desc: "Teams already paying overages are an easy conversation — they're already spending the money, just inefficiently.",
+          },
+          {
+            id: "seats",
+            icon: "👥",
+            label: "Rapid seat growth",
+            desc: "Teams adding multiple users recently are expanding — a natural moment to discuss plan alignment.",
+          },
+        ];
+        return (
+          <div style={{ maxWidth: 700 }}>
+            <BackBtn onClick={onBack} />
+            <Tag variant="blue">Advanced Case · Step 1 of 2</Tag>
+            <h2
+              style={{
+                fontSize: 30,
+                fontWeight: 800,
+                color: C.navy,
+                margin: "14px 0 6px",
+                fontFamily: "Playfair Display, serif",
+              }}
+            >
+              Decide: what signals matter
+            </h2>
+            <p
+              style={{
+                color: C.muted,
+                lineHeight: 1.75,
+                marginBottom: 28,
+                fontFamily: "Inter, sans-serif",
+              }}
+            >
+              Upsell conversations land best when you come with data and when
+              they feel like a partnership. Which signals give your CSMs the
+              clearest picture?
+            </p>
+            <div
+              style={{
+                display: "grid",
+                gap: 12,
+                gridTemplateColumns: "1fr 1fr 1fr",
+                marginBottom: 24,
+              }}
+            >
+              {opts.map((o) => {
+                const sel = signals.includes(o.id);
+                return (
+                  <div
+                    key={o.id}
+                    onClick={() => toggle(o.id)}
+                    style={{
+                      background: sel ? "rgba(37,99,168,0.08)" : C.card,
+                      backdropFilter: "blur(4px)",
+                      border: `1.5px solid ${sel ? C.blue : C.cardBorder}`,
+                      borderRadius: 12,
+                      padding: "16px 18px",
+                      cursor: "pointer",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    <div style={{ fontSize: 20, marginBottom: 8 }}>
+                      {o.icon}
+                    </div>
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        color: C.navy,
+                        fontSize: 13,
+                        marginBottom: 6,
+                        fontFamily: "Inter, sans-serif",
+                      }}
+                    >
+                      {o.label}
+                    </div>
+                    <div
+                      style={{
+                        color: C.muted,
+                        fontSize: 12,
+                        lineHeight: 1.65,
+                        fontFamily: "Inter, sans-serif",
+                      }}
+                    >
+                      {o.desc}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <Card
+              style={{
+                background: "rgba(37,99,168,0.06)",
+                borderColor: `${C.blue}25`,
+              }}
+            >
+              <div
+                style={{
+                  fontWeight: 700,
+                  color: C.navy,
+                  marginBottom: 8,
+                  fontFamily: "Inter, sans-serif",
+                }}
+              >
+                What Orb gives you
+              </div>
+              <div
+                style={{
+                  color: C.muted,
+                  fontSize: 13,
+                  lineHeight: 1.75,
+                  fontFamily: "Inter, sans-serif",
+                }}
+              >
+                Orb's License and Subscription APIs let you pull per-user usage
+                snapshots across billing periods, seat counts, overage charges
+                from invoices, and subscription plan details — everything you
+                need to compute these signals without building your own usage
+                infrastructure.
+              </div>
+            </Card>
+            <div style={{ marginTop: 28 }}>
+              <Btn onClick={onNext}>Build the CSM dashboard →</Btn>
+            </div>
+          </div>
+        );
+      };
+
+      // ── ADVANCED: BUILD ───────────────────────────────────────────────────────
+
+      const metrics = [
+        {
+          id: "growth",
+          label: "Usage growth over time",
+          icon: "📈",
+          endpoint: "GET /v1/subscriptions/{id}/usage",
+          summary:
+            "Pulls usage for each billable metric across any date range. Use timeframe_start and timeframe_end to query the last 3 billing period windows, then compare totals to get month-over-month growth.",
+          apiCall: `curl -G https://api.withorb.com/v1/subscriptions/sub_01xyz/usage \\\n  -H "Authorization: Bearer $ORB_API_KEY" \\\n  --data-urlencode "timeframe_start=2024-12-01T00:00:00Z" \\\n  --data-urlencode "timeframe_end=2025-03-01T00:00:00Z" \\\n  --data-urlencode "granularity=month"`,
+          response: `{\n  "data": [\n    {\n      "metric": { "id": "metric_tokens", "name": "Tokens used" },\n      "usage": [\n        { "timeframe_start": "2024-12-01", "timeframe_end": "2025-01-01", "quantity": 31000 },\n        { "timeframe_start": "2025-01-01", "timeframe_end": "2025-02-01", "quantity": 37200 },\n        { "timeframe_start": "2025-02-01", "timeframe_end": "2025-03-01", "quantity": 45500 }\n      ]\n    }\n  ]\n}`,
+          calculation: `function calcGrowth(usageData) {\n  const periods = usageData[0].usage;\n  return periods.map((p, i) => {\n    if (i === 0) return { period: p.timeframe_start, quantity: p.quantity, growthPct: null };\n    const prev = periods[i - 1].quantity;\n    const curr = p.quantity;\n    return {\n      period: p.timeframe_start,\n      quantity: curr,\n      growthPct: prev > 0 ? ((curr - prev) / prev * 100).toFixed(1) : null\n    };\n  });\n}\n\n// Output:\n// [{ period: "2025-01-01", quantity: 37200, growthPct: "20.0" },\n//  { period: "2025-02-01", quantity: 45500, growthPct: "22.3" }]`,
+          mock: () => (
+            <div>
+              <div
+                style={{
+                  color: C.faint,
+                  fontSize: 10,
+                  marginBottom: 14,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                  fontFamily: "Inter, sans-serif",
+                }}
+              >
+                ACME Corp · Token usage MoM
+              </div>
+              {[
+                ["Dec", 31000, null],
+                ["Jan", 37200, "+20%"],
+                ["Feb", 45500, "+22%"],
+              ].map(([m, v, g]) => (
+                <div
+                  key={m}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    marginBottom: 12,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 28,
+                      color: C.faint,
+                      fontSize: 12,
+                      fontFamily: "Inter, sans-serif",
+                    }}
+                  >
+                    {m}
+                  </div>
+                  <div
+                    style={{
+                      flex: 1,
+                      background: "rgba(26,16,64,0.08)",
+                      borderRadius: 4,
+                      height: 10,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${(v / 50000) * 100}%`,
+                        height: "100%",
+                        background: C.blue,
+                        borderRadius: 4,
+                      }}
+                    />
+                  </div>
+                  <div
+                    style={{
+                      width: 50,
+                      color: C.navy,
+                      fontSize: 12,
+                      textAlign: "right",
+                      fontFamily: "Inter, sans-serif",
+                    }}
+                  >
+                    {(v / 1000).toFixed(0)}k
+                  </div>
+                  {g && (
+                    <div
+                      style={{
+                        width: 40,
+                        color: C.green,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        fontFamily: "Inter, sans-serif",
+                      }}
+                    >
+                      {g}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ),
+        },
+        {
+          id: "highUsage",
+          label: "% users at 90%+ per month",
+          icon: "🔥",
+          endpoint:
+            "GET /v1/subscriptions/{id}/license_types/{lt_id}/licenses/usage",
+          summary:
+            "Pulls usage for every license (seat) on the subscription. Each license has a quantity_granted (allotment) and quantity_used. Loop through users, check who's at 90%+, and track that fraction per billing period.",
+          apiCall: `# Step 1: List license types on the subscription\ncurl https://api.withorb.com/v1/license_types \\\n  -H "Authorization: Bearer $ORB_API_KEY"\n\n# Step 2: Get usage for all licenses of that type\ncurl -G "https://api.withorb.com/v1/subscriptions/sub_01xyz/license_types/lt_01/licenses/usage" \\\n  -H "Authorization: Bearer $ORB_API_KEY" \\\n  --data-urlencode "timeframe_start=2025-02-01T00:00:00Z" \\\n  --data-urlencode "timeframe_end=2025-03-01T00:00:00Z"`,
+          response: `{\n  "data": [\n    {\n      "license_id": "lic_alice",\n      "external_license_id": "user_alice@acme.com",\n      "quantity_granted": 5000,\n      "quantity_used": 4820,\n      "billing_period_start": "2025-02-01",\n      "billing_period_end": "2025-03-01"\n    },\n    {\n      "license_id": "lic_bob",\n      "external_license_id": "user_bob@acme.com",\n      "quantity_granted": 5000,\n      "quantity_used": 1100,\n      "billing_period_start": "2025-02-01",\n      "billing_period_end": "2025-03-01"\n    }\n  ]\n}`,
+          calculation: `// % of users at 90%+ for one billing period\nfunction calcHighUsageRate(licenses) {\n  const total = licenses.length;\n  const highUsage = licenses.filter(l =>\n    l.quantity_used / l.quantity_granted >= 0.9\n  );\n  return {\n    total,\n    highUsageCount: highUsage.length,\n    rate: ((highUsage.length / total) * 100).toFixed(1),\n    users: highUsage.map(l => ({\n      userId: l.external_license_id,\n      pct: (l.quantity_used / l.quantity_granted * 100).toFixed(1)\n    }))\n  };\n}\n\n// Find users consistently at 90%+ across multiple periods\nfunction consistentlyHigh(usageByPeriod, periods = 3) {\n  const userMap = {};\n  usageByPeriod.forEach(period => {\n    period.licenses.forEach(l => {\n      const pct = l.quantity_used / l.quantity_granted;\n      if (!userMap[l.external_license_id]) userMap[l.external_license_id] = 0;\n      if (pct >= 0.9) userMap[l.external_license_id]++;\n    });\n  });\n  return Object.entries(userMap)\n    .filter(([_, count]) => count === periods)\n    .map(([userId]) => userId);\n}`,
+          mock: () => (
+            <div>
+              <div
+                style={{
+                  color: C.faint,
+                  fontSize: 10,
+                  marginBottom: 14,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                  fontFamily: "Inter, sans-serif",
+                }}
+              >
+                Users at 90%+ · Past 3 months
+              </div>
+              {[
+                ["Jan", 2, 10],
+                ["Feb", 4, 10],
+                ["Mar", 7, 10],
+              ].map(([m, n, t]) => (
+                <div
+                  key={m}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    marginBottom: 12,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 28,
+                      color: C.faint,
+                      fontSize: 12,
+                      fontFamily: "Inter, sans-serif",
+                    }}
+                  >
+                    {m}
+                  </div>
+                  <div
+                    style={{
+                      flex: 1,
+                      display: "flex",
+                      gap: 3,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    {Array.from({ length: t }).map((_, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          width: 16,
+                          height: 16,
+                          borderRadius: 3,
+                          background: i < n ? C.red : "rgba(26,16,64,0.1)",
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <div
+                    style={{
+                      color: n >= 5 ? C.red : C.muted,
+                      fontWeight: 700,
+                      fontSize: 12,
+                      width: 36,
+                      fontFamily: "Inter, sans-serif",
+                    }}
+                  >
+                    {Math.round((n / t) * 100)}%
+                  </div>
+                </div>
+              ))}
+              <div
+                style={{
+                  marginTop: 12,
+                  background: "rgba(192,57,43,0.08)",
+                  border: `1px solid ${C.red}25`,
+                  borderRadius: 8,
+                  padding: "10px 12px",
+                  fontSize: 12,
+                  color: C.muted,
+                  fontFamily: "Inter, sans-serif",
+                }}
+              >
+                ⚠️ 3 users have been at 90%+ for all 3 months — they could
+                benefit from a seat with a higher cap
+              </div>
+            </div>
+          ),
+        },
+        {
+          id: "seats",
+          label: "Seat growth (past 3 months)",
+          icon: "👥",
+          endpoint:
+            "GET /v1/subscriptions/{id}  ·  subscription.fixed_fee_quantity_updated",
+          summary:
+            "The subscription object has a fixed_fee_quantity field showing current seat count. Pair this with the fixed_fee_quantity_updated webhook to build a timeline of seat changes over the period.",
+          apiCall: `# Current subscription state (includes seat count)\ncurl https://api.withorb.com/v1/subscriptions/sub_01xyz \\\n  -H "Authorization: Bearer $ORB_API_KEY"\n\n# Or count licenses directly\ncurl https://api.withorb.com/v1/subscriptions/sub_01xyz/license_types/lt_01/licenses \\\n  -H "Authorization: Bearer $ORB_API_KEY"`,
+          response: `// GET /v1/subscriptions/{id}\n{\n  "id": "sub_01xyz",\n  "customer": { "id": "cust_01", "name": "ACME Corp" },\n  "plan": { "id": "plan_growth", "name": "Growth" },\n  "status": "active",\n  "fixed_fee_quantity": 12,\n  "current_billing_period_start": "2025-03-01",\n  "current_billing_period_end": "2025-04-01"\n}\n\n// Webhook fires on every seat change:\n{\n  "type": "subscription.fixed_fee_quantity_updated",\n  "properties": {\n    "price_id": "price_seat",\n    "quantity": 12,\n    "previous_quantity": 10,\n    "effective_date": "2025-02-15"\n  }\n}`,
+          calculation: `// Store seat events from webhooks in your DB, then:\nasync function getSeatGrowthTimeline(subscriptionId, months = 3) {\n  const events = await db.seatEvents\n    .where({ subscription_id: subscriptionId })\n    .orderBy("effective_date", "asc")\n    .since(subMonths(new Date(), months));\n\n  return events.map((e, i) => ({\n    date: e.effective_date,\n    seats: e.quantity,\n    delta: i === 0 ? null : e.quantity - events[i - 1].quantity\n  }));\n}\n\nfunction netNewSeats(timeline) {\n  if (timeline.length < 2) return 0;\n  return timeline[timeline.length - 1].seats - timeline[0].seats;\n}`,
+          mock: () => (
+            <div>
+              <div
+                style={{
+                  color: C.faint,
+                  fontSize: 10,
+                  marginBottom: 14,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                  fontFamily: "Inter, sans-serif",
+                }}
+              >
+                Seat changes · ACME Corp
+              </div>
+              <div style={{ display: "flex", gap: 10 }}>
+                {[
+                  ["Dec", 8, null],
+                  ["Jan", 9, "+1"],
+                  ["Feb", 10, "+1"],
+                  ["Mar", 12, "+2"],
+                ].map(([m, seats, delta]) => (
+                  <div
+                    key={m}
+                    style={{
+                      flex: 1,
+                      textAlign: "center",
+                      background: "rgba(26,16,64,0.06)",
+                      borderRadius: 8,
+                      padding: "14px 8px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        color: C.navy,
+                        fontWeight: 800,
+                        fontSize: 22,
+                        fontFamily: "Inter, sans-serif",
+                      }}
+                    >
+                      {seats}
+                    </div>
+                    <div
+                      style={{
+                        color: C.faint,
+                        fontSize: 10,
+                        marginTop: 2,
+                        fontFamily: "Inter, sans-serif",
+                      }}
+                    >
+                      seats
+                    </div>
+                    <div
+                      style={{
+                        color: C.faint,
+                        fontSize: 10,
+                        marginTop: 1,
+                        fontFamily: "Inter, sans-serif",
+                      }}
+                    >
+                      {m}
+                    </div>
+                    {delta && (
+                      <div
+                        style={{
+                          color: C.green,
+                          fontSize: 11,
+                          fontWeight: 700,
+                          marginTop: 6,
+                          fontFamily: "Inter, sans-serif",
+                        }}
+                      >
+                        {delta}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div
+                style={{
+                  marginTop: 12,
+                  color: C.muted,
+                  fontSize: 12,
+                  fontFamily: "Inter, sans-serif",
+                }}
+              >
+                +4 seats over 3 months · approaching 15-seat plan cap
+              </div>
+            </div>
+          ),
+        },
+        {
+          id: "overages",
+          label: "Overage spend + plan headroom",
+          icon: "💸",
+          endpoint:
+            "GET /v1/invoices?subscription_id={id}  ·  GET /v1/subscriptions/{id}",
+          summary:
+            "Invoice line items surface overage charges by period. The subscription object gives you plan limits and current quantities. Together, these tell you how much a customer has spent on overages and how close they are to their seat or usage cap.",
+          apiCall: `# Last 3 invoices for this subscription\ncurl -G https://api.withorb.com/v1/invoices \\\n  -H "Authorization: Bearer $ORB_API_KEY" \\\n  --data-urlencode "subscription_id=sub_01xyz" \\\n  --data-urlencode "status=issued" \\\n  --data-urlencode "limit=3"\n\n# Subscription for plan/seat context\ncurl https://api.withorb.com/v1/subscriptions/sub_01xyz \\\n  -H "Authorization: Bearer $ORB_API_KEY"`,
+          response: `{\n  "data": [{\n    "id": "inv_feb",\n    "invoice_date": "2025-03-01",\n    "total": "12400.00",\n    "line_items": [\n      {\n        "name": "Growth Plan (base)",\n        "amount": "10000.00"\n      },\n      {\n        "name": "Tokens used – overage",\n        "amount": "2400.00",\n        "quantity": 12000,\n        "is_in_arrears": true\n      }\n    ]\n  }]\n}`,
+          calculation: `function calcOverageSpend(invoices) {\n  return invoices.reduce((total, inv) => {\n    const overageLines = inv.line_items.filter(l =>\n      l.is_in_arrears === true ||\n      l.name.toLowerCase().includes("overage")\n    );\n    return total + overageLines.reduce(\n      (sum, l) => sum + parseFloat(l.amount), 0\n    );\n  }, 0);\n}\n\nfunction calcPlanHeadroom(subscription, currentSeats) {\n  const seatCap = subscription.plan.seat_limit;\n  return {\n    seatCap,\n    currentSeats,\n    seatHeadroom: seatCap ? seatCap - currentSeats : null,\n    seatHeadpct: seatCap\n      ? ((currentSeats / seatCap) * 100).toFixed(1)\n      : null\n  };\n}`,
+          mock: () => (
+            <div>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 10,
+                  marginBottom: 12,
+                }}
+              >
+                {[
+                  { label: "Plan", value: "Growth", color: C.blue },
+                  { label: "Seat cap", value: "15", color: C.navy },
+                  {
+                    label: "Current seats",
+                    value: "12 / 15",
+                    color: "#b07d1a",
+                  },
+                  { label: "Overages (90d)", value: "$4,820", color: C.red },
+                ].map(({ label, value, color }) => (
+                  <div
+                    key={label}
+                    style={{
+                      background: "rgba(26,16,64,0.06)",
+                      borderRadius: 8,
+                      padding: "12px 14px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        color: C.faint,
+                        fontSize: 10,
+                        marginBottom: 4,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.5px",
+                        fontFamily: "Inter, sans-serif",
+                      }}
+                    >
+                      {label}
+                    </div>
+                    <div
+                      style={{
+                        color,
+                        fontWeight: 700,
+                        fontSize: 18,
+                        fontFamily: "Inter, sans-serif",
+                      }}
+                    >
+                      {value}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div
+                style={{
+                  background: "rgba(192,57,43,0.08)",
+                  border: `1px solid ${C.red}25`,
+                  borderRadius: 8,
+                  padding: "10px 14px",
+                  fontSize: 12,
+                  color: C.muted,
+                  fontFamily: "Inter, sans-serif",
+                }}
+              >
+                ⚠️ $4,820 paid in overages last 3 months · 3 seats from the plan
+                cap
+              </div>
+            </div>
+          ),
+        },
+      ];
+
+      const AdvancedBuild = ({ onBack }) => {
+        const [active, setActive] = useState("growth");
+        const [tab, setTab] = useState("api");
+        const m = metrics.find((x) => x.id === active);
+
+        return (
+          <div style={{ maxWidth: 860 }}>
+            <BackBtn onClick={onBack} />
+            <Tag variant="blue">Advanced Case · Step 2 of 2</Tag>
+            <h2
+              style={{
+                fontSize: 30,
+                fontWeight: 800,
+                color: C.navy,
+                margin: "14px 0 6px",
+                fontFamily: "Playfair Display, serif",
+              }}
+            >
+              Build: the CSM intelligence dashboard
+            </h2>
+            <p
+              style={{
+                color: C.muted,
+                lineHeight: 1.75,
+                marginBottom: 28,
+                fontFamily: "Inter, sans-serif",
+              }}
+            >
+              Each metric below shows the exact API call, the shape of the
+              response, and the calculation your dashboard needs to make.
+            </p>
+
+            <div
+              style={{
+                display: "flex",
+                gap: 0,
+                borderBottom: `1px solid ${C.cardBorder}`,
+                marginBottom: 0,
+              }}
+            >
+              {metrics.map((met) => (
+                <button
+                  key={met.id}
+                  onClick={() => {
+                    setActive(met.id);
+                    setTab("api");
+                  }}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    borderBottom:
+                      active === met.id
+                        ? `2px solid ${C.red}`
+                        : "2px solid transparent",
+                    color: active === met.id ? C.navy : C.faint,
+                    padding: "10px 14px",
+                    fontSize: 12,
+                    fontWeight: active === met.id ? 700 : 500,
+                    cursor: "pointer",
+                    fontFamily: "Inter, sans-serif",
+                    marginBottom: "-1px",
+                  }}
+                >
+                  {met.icon} {met.label}
+                </button>
+              ))}
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 16,
+                margin: "16px 0",
+              }}
+            >
+              <Card>
+                <div
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: C.faint,
+                    letterSpacing: "0.5px",
+                    textTransform: "uppercase",
+                    marginBottom: 14,
+                    fontFamily: "Inter, sans-serif",
+                  }}
+                >
+                  Example output
+                </div>
+                {m.mock()}
+              </Card>
+              <Card>
+                <div
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: C.faint,
+                    letterSpacing: "0.5px",
+                    textTransform: "uppercase",
+                    marginBottom: 14,
+                    fontFamily: "Inter, sans-serif",
+                  }}
+                >
+                  How it's powered
+                </div>
+                <div
+                  style={{
+                    background: "rgba(26,16,64,0.06)",
+                    borderRadius: 8,
+                    padding: "8px 12px",
+                    fontSize: 11,
+                    color: C.blue,
+                    fontFamily: "monospace",
+                    marginBottom: 12,
+                    wordBreak: "break-all",
+                  }}
+                >
+                  {m.endpoint}
+                </div>
+                <div
+                  style={{
+                    color: C.muted,
+                    fontSize: 13,
+                    lineHeight: 1.75,
+                    fontFamily: "Inter, sans-serif",
+                  }}
+                >
+                  {m.summary}
+                </div>
+              </Card>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                gap: 0,
+                borderBottom: `1px solid ${C.cardBorder}`,
+              }}
+            >
+              {[
+                ["api", "API call"],
+                ["response", "Response shape"],
+                ["calculation", "Calculation code"],
+              ].map(([id, label]) => (
+                <button
+                  key={id}
+                  onClick={() => setTab(id)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    borderBottom:
+                      tab === id
+                        ? `2px solid ${C.red}`
+                        : "2px solid transparent",
+                    color: tab === id ? C.navy : C.faint,
+                    padding: "10px 16px",
+                    fontSize: 12,
+                    fontWeight: tab === id ? 700 : 500,
+                    cursor: "pointer",
+                    fontFamily: "Inter, sans-serif",
+                    marginBottom: "-1px",
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <Card style={{ borderRadius: "0 12px 12px 12px", marginTop: 0 }}>
+              {tab === "api" && <Code lang="bash" code={m.apiCall} />}
+              {tab === "response" && <Code lang="json" code={m.response} />}
+              {tab === "calculation" && (
+                <Code lang="javascript" code={m.calculation} />
+              )}
+            </Card>
+
+            <Card style={{ marginTop: 24, borderLeft: `3px solid ${C.green}` }}>
+              <div
+                style={{
+                  fontWeight: 800,
+                  color: C.navy,
+                  fontSize: 20,
+                  marginBottom: 8,
+                  fontFamily: "Playfair Display, serif",
+                }}
+              >
+                You've built it.
+              </div>
+              <div
+                style={{
+                  color: C.muted,
+                  lineHeight: 1.75,
+                  marginBottom: 20,
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: 14,
+                }}
+              >
+                With Orb's webhooks for real-time alerts and the License,
+                Subscription, and Invoice APIs for historical intelligence, you
+                have everything you need to run data-driven upsell motions —
+                without building billing infrastructure from scratch.
+              </div>
+              <div style={{ display: "flex", gap: 12 }}>
+                <a
+                  href="https://docs.withorb.com/integrations-and-exports/webhooks"
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ textDecoration: "none" }}
+                >
+                  <Btn variant="ghost">Webhook docs →</Btn>
+                </a>
+                <a
+                  href="https://docs.withorb.com/api-reference/license/list-licenses"
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ textDecoration: "none" }}
+                >
+                  <Btn variant="ghost">License API →</Btn>
+                </a>
+                <a
+                  href="https://docs.withorb.com/api-reference/subscription/fetch-subscription-usage"
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ textDecoration: "none" }}
+                >
+                  <Btn variant="ghost">Usage API →</Btn>
+                </a>
+              </div>
+            </Card>
+          </div>
+        );
+      };
+
+      // ── APP ───────────────────────────────────────────────────────────────────
+
+      function App() {
+        const [step, setStep] = useState(0);
+
+        const screens = [
+          <Intro
+            onStart={(choice) => setStep(choice === "advanced" ? 3 : 1)}
+          />,
+          <SimpleDecide onNext={() => setStep(2)} onBack={() => setStep(0)} />,
+          <SimpleConfigure
+            onNext={() => setStep(3)}
+            onBack={() => setStep(1)}
+          />,
+          <AdvancedDecide
+            onNext={() => setStep(4)}
+            onBack={() => setStep(2)}
+          />,
+          <AdvancedBuild onBack={() => setStep(3)} />,
+        ];
+
+        return (
+          <div
+            style={{
+              background: C.bg,
+              minHeight: "100vh",
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
+            <style>{GF}</style>
+            <div
+              style={{
+                position: "fixed",
+                top: 0,
+                right: 0,
+                width: 500,
+                height: 500,
+                background:
+                  "radial-gradient(circle, rgba(180,220,180,0.35) 0%, transparent 70%)",
+                pointerEvents: "none",
+                zIndex: 0,
+              }}
+            />
+            <div
+              style={{
+                position: "fixed",
+                bottom: 0,
+                left: 0,
+                width: 500,
+                height: 500,
+                background:
+                  "radial-gradient(circle, rgba(180,200,240,0.3) 0%, transparent 70%)",
+                pointerEvents: "none",
+                zIndex: 0,
+              }}
+            />
+            <div style={{ position: "relative", zIndex: 1 }}>
+              <Nav step={step} setStep={setStep} />
+              <div
+                style={{
+                  padding: "48px 40px 80px",
+                  maxWidth: 960,
+                  margin: "0 auto",
+                }}
+              >
+                {screens[step]}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    </script>
+  </body>
+</html>
