@@ -1,0 +1,201 @@
+---
+import Page from "../layout/page.astro";
+---
+<Page>
+  <section class="hero">
+    <p class="eyebrow">Orb — Platform</p>
+    <h1>
+      <span class="word-bill">Bill</span>
+      <span class="arrow">→</span>
+      Build
+    </h1>
+    <p class="hero-sub">Stop writing billing code. Start shipping product.</p>
+  </section>
+
+  <section class="cards">
+    <div class="card">
+      <div class="card-media">
+        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjM2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+QmlsbGluZyBsb2dpYzwvdGV4dD48L3N2Zz4=" alt="Billing logic illustration" />
+      </div>
+      <div class="card-body">
+        <span class="card-tag">Before</span>
+        <h2>Months building billing infrastructure</h2>
+        <p>Entitlement checks scattered across your codebase. Pricing logic tangled with product logic. Every new plan means a new engineer sprint.</p>
+        <div class="card-footer">
+          <a href="#" class="card-arrow">Learn more ↗</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-media">
+        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjM2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+T3JiIHBsYXRmb3JtPC90ZXh0Pjwvc3ZnPg==" alt="Orb platform illustration" />
+      </div>
+      <div class="card-body">
+        <span class="card-tag">After</span>
+        <h2>Ship pricing changes in minutes</h2>
+        <p>Orb separates billing from your product code. Define plans in a dashboard. Deploy pricing experiments without touching your codebase.</p>
+        <div class="card-footer">
+          <a href="#" class="card-arrow">Get started ↗</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Page>
+
+<style>
+  /* Layout */
+  .hero,
+  .cards {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 3em;
+  }
+
+  /* Hero */
+  .hero {
+    padding-top: 7em;
+    padding-bottom: 6em;
+    text-align: center;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #666;
+    margin: 0 0 1.5em;
+  }
+
+  h1 {
+    font-family: Georgia, serif;
+    font-size: clamp(56px, 7vw, 92px);
+    font-weight: 400;
+    line-height: 1.0;
+    color: #111;
+    margin: 0 0 0.5em;
+  }
+
+  .word-bill {
+    color: #ccc;
+    text-decoration: line-through;
+    text-decoration-color: #ccc;
+  }
+
+  .arrow {
+    font-family: var(--font-mono);
+    font-size: 0.45em;
+    color: #999;
+    display: inline-block;
+    vertical-align: middle;
+    margin: 0 0.15em;
+  }
+
+  .hero-sub {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 17px;
+    color: #555;
+    margin: 0;
+  }
+
+  /* Cards */
+  .cards {
+    padding-bottom: 7em;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5em;
+  }
+
+  .card {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
+  }
+
+  .card-media img {
+    width: 100%;
+    display: block;
+  }
+
+  .card-body {
+    padding: 2em;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75em;
+    flex: 1;
+  }
+
+  .card-tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #666;
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    padding: 3px 8px;
+    align-self: flex-start;
+  }
+
+  .card h2 {
+    font-family: Georgia, serif;
+    font-size: 28px;
+    font-weight: 400;
+    color: #111;
+    margin: 0;
+    line-height: 1.25;
+  }
+
+  .card p {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 15px;
+    color: #555;
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .card-footer {
+    margin-top: auto;
+    padding-top: 1em;
+  }
+
+  .card-arrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: #111;
+    text-decoration: none;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    padding: 8px 14px;
+    display: inline-block;
+    transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+  }
+
+  .card-arrow:hover {
+    background: #111;
+    color: #fff;
+    border-color: #111;
+  }
+
+  @media (max-width: 700px) {
+    .hero {
+      padding-top: 4em;
+      padding-bottom: 3em;
+    }
+
+    .cards {
+      grid-template-columns: 1fr;
+      padding-bottom: 4em;
+    }
+  }
+</style>
